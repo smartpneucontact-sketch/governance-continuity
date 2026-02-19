@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — Governance Continuity{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Governance Dashboard</h1>
+    <p>Real-time overview of organizational governance health and leadership continuity.</p>
+</div>
+
+{% if stats.active_disruptions > 0 %}
+<div class="alert-bar">
+    <div class="pulse"></div>
+    <span class="alert-text">
+        <strong>{{ stats.active_disruptions }} active disruption{{ 's' if stats.active_disruptions > 1 }}</strong> —
+        {{ stats.disrupted_leaders }} leader{{ 's' if stats.disrupted_leaders > 1 }} currently unavailable.
+        {% for d in active_disruptions %}
+            {{ d.leader.name }} ({{ d.event_type }}){{ ', ' if not loop.last }}
+        {% endfor %}
+    </span>
+</div>
+{% endif %}
+
+<div class="stats-grid">
+    <div class="stat-card blue">
+        <div class="stat-label">Total Leaders</div>
+        <div class="stat-value">{{ stats.total_leaders }}</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-label">Active</div>
+        <div class="stat-value">{{ stats.active_leaders }}</div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-label">Disrupted</div>
+        <div class="stat-value">{{ stats.disrupted_leaders }}</div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-label">Decision Domains</div>
+        <div class="stat-value">{{ stats.total_domains }}</div>
+    </div>
+    <div class="stat-card yellow">
+        <div class="stat-label">Unassigned Domains</div>
+        <div class="stat-value">{{ stats.unassigned_domains }}</div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h2>Governance Health Score</h2>
+        </div>
+        <div style="display: flex; align-items: center; gap: 2rem; padding: 1rem 0;">
+            <div class="health-ring">
+                <svg viewBox="0 0 120 120">
+                    <circle class="track" cx="60" cy="60" r="50"/>
+                    <circle class="fill" cx="60" cy="60" r="50"
+                        stroke-dasharray="{{ (stats.health_score / 100 * 314.16)|round(1) }} 314.16"/>
+                </svg>
+                <span class="health-score-text" style="color: {% if stats.health_score >= 75 %}var(--success){% elif stats.health_score >= 50 %}var(--warning){% else %}var(--danger){% endif %};">{{ stats.health_score }}</span>
+            </div>
+            <div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.8rem;">
+                    <strong style="color: var(--text-primary);">Score breakdown:</strong>
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.8;">
+                    <span style="color: var(--accent);">40%</span> Leader availability<br>
+                    <span style="color: var(--accent);">35%</span> Domain coverage<br>
+                    <span style="color: var(--accent);">25%</span> Succession planning
+                </div>
+            </div>
+        </div>
+        {% if stats.health_score < 50 %}
+        <div style="margin-top: 0.5rem; padding: 0.6rem; background: rgba(239,68,68,0.06); border-radius: 6px; font-size: 0.8rem; color: var(--danger);">
+            ⚠ Critical: Governance health is below threshold. Review succession plans and domain assignments.
+        </div>
+        {% elif stats.health_score < 75 %}
+        <div style="margin-top: 0.5rem; padding: 0.6rem; background: rgba(245,158,11,0.06); border-radius: 6px; font-size: 0.8rem; color: var(--warning);">
+            Attention needed: Some governance gaps detected. Consider assigning successors and reviewing domains.
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Recent Governance Activity</h2>
+            <a href="{{ url_for('audit_log') }}" class="btn btn-outline btn-sm">View All</a>
+        </div>
+        {% if recent_logs %}
+        {% for log in recent_logs %}
+        <div class="log-item">
+            <span class="log-action">{{ log.action }}</span>
+            <span class="log-time">{{ log.created_at.strftime('%b %d, %H:%M') }}</span>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state" style="padding: 2rem;">
+            <p>No activity yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div style="margin-top: 1.5rem;">
+    <div class="card">
+        <div class="card-header">
+            <h2>Leadership Status Overview</h2>
+            <a href="{{ url_for('leaders_list') }}" class="btn btn-outline btn-sm">Manage Leaders</a>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Title</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Successor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leader in leaders %}
+                    <tr>
+                        <td><strong>{{ leader.name }}</strong></td>
+                        <td>{{ leader.title }}</td>
+                        <td>{{ leader.department }}</td>
+                        <td><span class="badge badge-{{ leader.status }}">{{ leader.status }}</span></td>
+                        <td>
+                            {% if leader.successor %}
+                                {{ leader.successor.name }}
+                            {% else %}
+                                <span style="color: var(--text-muted); font-size: 0.78rem;">— none —</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

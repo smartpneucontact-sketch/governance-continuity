@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}AI Governance Matrix — Governance Continuity{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>AI Governance Matrix</h1>
+    <p>Visualize how AI supports each decision domain — and where human judgment remains essential. AI accelerates analysis, not authority.</p>
+</div>
+
+<div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 2rem;">
+    {% set ns = namespace(none=0, advisory=0, assisted=0, autonomous=0) %}
+    {% for d in domains %}
+        {% if d.ai_support_level == 'none' %}{% set ns.none = ns.none + 1 %}
+        {% elif d.ai_support_level == 'advisory' %}{% set ns.advisory = ns.advisory + 1 %}
+        {% elif d.ai_support_level == 'assisted' %}{% set ns.assisted = ns.assisted + 1 %}
+        {% elif d.ai_support_level == 'autonomous' %}{% set ns.autonomous = ns.autonomous + 1 %}
+        {% endif %}
+    {% endfor %}
+    <div class="stat-card" style="border-left: 3px solid var(--text-muted);">
+        <div class="stat-label">No AI</div>
+        <div class="stat-value" style="color: var(--text-muted);">{{ ns.none }}</div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-label">Advisory</div>
+        <div class="stat-value">{{ ns.advisory }}</div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-label">Assisted</div>
+        <div class="stat-value">{{ ns.assisted }}</div>
+    </div>
+    <div class="stat-card yellow">
+        <div class="stat-label">Autonomous</div>
+        <div class="stat-value">{{ ns.autonomous }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Domain × AI Support × Risk Matrix</h2>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Decision Domain</th>
+                    <th>Category</th>
+                    <th>Risk Level</th>
+                    <th>AI Support Level</th>
+                    <th>Human Judgment</th>
+                    <th>Authority</th>
+                    <th>AI Boundaries</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for domain in domains %}
+                <tr>
+                    <td><strong>{{ domain.name }}</strong></td>
+                    <td style="text-transform: capitalize;">{{ domain.category }}</td>
+                    <td><span class="badge badge-{{ domain.risk_level }}">{{ domain.risk_level }}</span></td>
+                    <td>
+                        <div class="matrix-cell">
+                            <span class="badge badge-{{ domain.ai_support_level }}">{{ domain.ai_support_level }}</span>
+                            <div class="ai-bar">
+                                <div class="ai-bar-fill {{ domain.ai_support_level }}"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if domain.human_judgment_required %}
+                        <span class="human-required">✓ Required</span>
+                        {% else %}
+                        <span class="human-not-required">Optional</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if domain.authority_leader %}
+                            {{ domain.authority_leader.name }}
+                            {% if domain.authority_leader.status != 'active' %}
+                                <span class="badge badge-{{ domain.authority_leader.status }}" style="margin-left: 0.3rem;">{{ domain.authority_leader.status }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span style="color: var(--danger); font-size: 0.75rem;">Unassigned</span>
+                        {% endif %}
+                    </td>
+                    <td style="max-width: 200px;">
+                        {% if domain.ai_boundary_notes %}
+                            <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ domain.ai_boundary_notes[:100] }}{{ '...' if domain.ai_boundary_notes|length > 100 }}</span>
+                        {% else %}
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 1.5rem;">
+    <div class="card-header">
+        <h2>Governance Principles</h2>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; padding: 0.5rem 0;">
+        <div style="padding: 1rem; background: var(--bg-secondary); border-radius: 8px; border-left: 3px solid var(--accent);">
+            <strong style="font-size: 0.82rem;">AI accelerates analysis, not judgment</strong>
+            <p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.3rem;">AI can process data faster — but authority, accountability, and trust remain human responsibilities.</p>
+        </div>
+        <div style="padding: 1rem; background: var(--bg-secondary); border-radius: 8px; border-left: 3px solid var(--success);">
+            <strong style="font-size: 0.82rem;">Preserve human judgment where essential</strong>
+            <p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.3rem;">Critical and compliance decisions require human oversight regardless of AI capability.</p>
+        </div>
+        <div style="padding: 1rem; background: var(--bg-secondary); border-radius: 8px; border-left: 3px solid var(--warning);">
+            <strong style="font-size: 0.82rem;">Define trust boundaries explicitly</strong>
+            <p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.3rem;">Every AI-supported domain must have clear guardrails, escalation paths, and accountability.</p>
+        </div>
+        <div style="padding: 1rem; background: var(--bg-secondary); border-radius: 8px; border-left: 3px solid var(--purple);">
+            <strong style="font-size: 0.82rem;">Reduce heroics, preserve trust</strong>
+            <p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.3rem;">Systems should work when leaders are disrupted — without relying on individual overextension.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
