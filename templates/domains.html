@@ -1,76 +1,36 @@
 {% extends 'base.html' %}
-{% block title %}Decision Domains — Governance Continuity{% endblock %}
+{% block title %}Decision Domains — GCA{% endblock %}
 {% block content %}
-<div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
     <div>
-        <h1>Decision Domains</h1>
-        <p>Map decision authority, risk levels, and AI governance boundaries for every key domain.</p>
+        <h1>Decision Continuity Framework</h1>
+        <p>Map every decision domain to an authority role, risk level, AI boundary, and velocity status.</p>
     </div>
     <a href="{{ url_for('add_domain') }}" class="btn btn-primary">+ Add Domain</a>
 </div>
-
 <div class="card">
     <div class="table-wrap">
         <table>
-            <thead>
-                <tr>
-                    <th>Domain</th>
-                    <th>Category</th>
-                    <th>Risk</th>
-                    <th>Authority</th>
-                    <th>AI Support</th>
-                    <th>Human Judgment</th>
-                    <th style="text-align: right;">Actions</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Domain</th><th>Category</th><th>Risk</th><th>Authority Role</th><th>AI Level</th><th>Human Req.</th><th>Velocity</th><th style="text-align:right;">Actions</th></tr></thead>
             <tbody>
-                {% for domain in domains %}
-                <tr>
-                    <td>
-                        <strong>{{ domain.name }}</strong>
-                        {% if domain.description %}
-                        <br><span style="font-size: 0.75rem; color: var(--text-muted);">{{ domain.description[:80] }}{{ '...' if domain.description|length > 80 }}</span>
-                        {% endif %}
-                    </td>
-                    <td><span style="text-transform: capitalize;">{{ domain.category }}</span></td>
-                    <td><span class="badge badge-{{ domain.risk_level }}">{{ domain.risk_level }}</span></td>
-                    <td>
-                        {% if domain.authority_leader %}
-                            {{ domain.authority_leader.name }}
-                            {% if domain.authority_leader.status == 'disrupted' %}
-                                <br><span style="font-size: 0.72rem; color: var(--danger);">⚠ Currently disrupted</span>
-                            {% endif %}
-                        {% else %}
-                            <span style="color: var(--danger); font-size: 0.75rem;">⚠ Unassigned</span>
-                        {% endif %}
-                    </td>
-                    <td><span class="badge badge-{{ domain.ai_support_level }}">{{ domain.ai_support_level }}</span></td>
-                    <td>
-                        {% if domain.human_judgment_required %}
-                        <span class="human-required">✓ Required</span>
-                        {% else %}
-                        <span class="human-not-required">Optional</span>
-                        {% endif %}
-                    </td>
-                    <td style="text-align: right;">
-                        <div class="btn-group" style="justify-content: flex-end;">
-                            <a href="{{ url_for('edit_domain', id=domain.id) }}" class="btn btn-outline btn-sm">Edit</a>
-                            <form method="POST" action="{{ url_for('delete_domain', id=domain.id) }}" style="display:inline;"
-                                  onsubmit="return confirm('Delete {{ domain.name }}?');">
-                                <button type="submit" class="btn btn-danger btn-sm">×</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-                {% if not domains %}
-                <tr><td colspan="7">
-                    <div class="empty-state">
-                        <p>No decision domains defined yet.</p>
-                        <a href="{{ url_for('add_domain') }}" class="btn btn-primary">Add First Domain</a>
+            {% for d in domains %}
+            <tr>
+                <td><strong>{{ d.name }}</strong>{% if d.description %}<br><span style="font-size:0.72rem;color:var(--text-muted);">{{ d.description[:80] }}{{ '...' if d.description|length > 80 }}</span>{% endif %}</td>
+                <td style="text-transform:capitalize;">{{ d.category }}</td>
+                <td><span class="badge badge-{{ d.risk_level }}">{{ d.risk_level }}</span></td>
+                <td>{% if d.authority_role %}{{ d.authority_role.role_title }}{% if d.authority_role.status == 'disrupted' %}<br><span style="font-size:0.7rem;color:var(--danger);">⚠ Disrupted</span>{% endif %}{% else %}<span style="color:var(--danger);font-size:0.72rem;">⚠ Unassigned</span>{% endif %}</td>
+                <td><span class="badge badge-{{ d.ai_support_level }}">{{ d.ai_support_level }}</span></td>
+                <td>{% if d.human_judgment_required %}<span style="color:var(--success);font-size:0.75rem;">✓ Required</span>{% else %}<span style="color:var(--text-muted);font-size:0.75rem;">Optional</span>{% endif %}</td>
+                <td><span class="badge badge-{{ d.decision_velocity }}">{{ d.decision_velocity }}</span></td>
+                <td style="text-align:right;">
+                    <div class="btn-group" style="justify-content:flex-end;">
+                        <a href="{{ url_for('edit_domain', id=d.id) }}" class="btn btn-outline btn-sm">Edit</a>
+                        <form method="POST" action="{{ url_for('delete_domain', id=d.id) }}" style="display:inline;" onsubmit="return confirm('Delete {{ d.name }}?');"><button type="submit" class="btn btn-danger btn-sm">×</button></form>
                     </div>
-                </td></tr>
-                {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not domains %}<tr><td colspan="8"><div class="empty-state"><p>No decision domains defined.</p><a href="{{ url_for('add_domain') }}" class="btn btn-primary">Add First Domain</a></div></td></tr>{% endif %}
             </tbody>
         </table>
     </div>

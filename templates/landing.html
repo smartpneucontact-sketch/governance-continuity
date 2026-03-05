@@ -3,148 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Governance Continuity</title>
+    <title>Governance Continuity Architecture</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #0B0F19;
-            --accent: #3B82F6;
-            --text: #E8ECF4;
-            --text-dim: #8B95A8;
-            --border: #2A3650;
-        }
+        :root { --bg: #0B0F19; --accent: #3B82F6; --text: #E8ECF4; --text-dim: #8B95A8; --text-muted: #5A6478; --border: #2A3650; --purple: #8B5CF6; --teal: #14B8A6; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            position: relative;
-        }
-        .grid-bg {
-            position: fixed;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
-            background-size: 60px 60px;
-            pointer-events: none;
-        }
-        .glow {
-            position: fixed;
-            width: 500px;
-            height: 500px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-        }
-        .content {
-            text-align: center;
-            max-width: 600px;
-            padding: 2rem;
-            position: relative;
-            z-index: 1;
-        }
-        .logo {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.75rem;
-            letter-spacing: 0.2em;
-            color: var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.6rem;
-            margin-bottom: 2.5rem;
-        }
-        .logo .dot {
-            width: 10px; height: 10px;
-            background: var(--accent);
-            border-radius: 50%;
-            box-shadow: 0 0 12px var(--accent), 0 0 40px rgba(59,130,246,0.2);
-            animation: breathe 3s ease-in-out infinite;
-        }
-        @keyframes breathe {
-            0%, 100% { box-shadow: 0 0 12px var(--accent), 0 0 40px rgba(59,130,246,0.2); }
-            50% { box-shadow: 0 0 20px var(--accent), 0 0 60px rgba(59,130,246,0.3); }
-        }
-        h1 {
-            font-size: 2.8rem;
-            font-weight: 700;
-            line-height: 1.15;
-            margin-bottom: 1.2rem;
-            letter-spacing: -0.02em;
-        }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+        .grid-bg { position: fixed; inset: 0; background-image: linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px); background-size: 60px 60px; pointer-events: none; }
+        .glow { position: fixed; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%); top: 40%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+        .content { text-align: center; max-width: 700px; padding: 2rem; position: relative; z-index: 1; }
+        .logo { font-family: 'Space Mono', monospace; font-size: 0.7rem; letter-spacing: 0.2em; color: var(--accent); display: flex; align-items: center; justify-content: center; gap: 0.6rem; margin-bottom: 1rem; }
+        .logo .dot { width: 10px; height: 10px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 12px var(--accent), 0 0 40px rgba(59,130,246,0.2); animation: breathe 3s ease-in-out infinite; }
+        @keyframes breathe { 0%,100% { box-shadow: 0 0 12px var(--accent), 0 0 40px rgba(59,130,246,0.2); } 50% { box-shadow: 0 0 20px var(--accent), 0 0 60px rgba(59,130,246,0.3); } }
+        .kicker { font-size: 0.82rem; color: var(--text-dim); margin-bottom: 1.5rem; letter-spacing: 0.02em; }
+        h1 { font-size: 2.6rem; font-weight: 700; line-height: 1.15; margin-bottom: 1.2rem; letter-spacing: -0.02em; }
         h1 span { color: var(--accent); }
-        .subtitle {
-            font-size: 1.05rem;
-            color: var(--text-dim);
-            line-height: 1.6;
-            margin-bottom: 2.5rem;
-        }
-        .actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-        }
-        .btn {
-            padding: 0.75rem 1.75rem;
-            border-radius: 8px;
-            font-family: inherit;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-        .btn-primary {
-            background: var(--accent);
-            color: #fff;
-        }
+        .subtitle { font-size: 1rem; color: var(--text-dim); line-height: 1.65; margin-bottom: 2rem; }
+        .pillars { display: flex; gap: 1rem; justify-content: center; margin-bottom: 2.5rem; flex-wrap: wrap; }
+        .pillar { background: rgba(26,34,51,0.8); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; text-align: left; flex: 1; min-width: 140px; max-width: 180px; }
+        .pillar-icon { font-size: 1rem; margin-bottom: 0.3rem; }
+        .pillar-label { font-family: 'Space Mono', monospace; font-size: 0.65rem; letter-spacing: 0.04em; color: var(--text-dim); }
+        .actions { display: flex; gap: 1rem; justify-content: center; }
+        .btn { padding: 0.75rem 1.75rem; border-radius: 8px; font-family: inherit; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; text-decoration: none; transition: all 0.2s; }
+        .btn-primary { background: var(--accent); color: #fff; }
         .btn-primary:hover { background: #2563EB; transform: translateY(-1px); }
-        .btn-ghost {
-            background: transparent;
-            color: var(--text-dim);
-            border: 1px solid var(--border);
-        }
+        .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
         .btn-ghost:hover { background: rgba(255,255,255,0.03); color: var(--text); }
-        .footer {
-            position: fixed;
-            bottom: 2rem;
-            font-size: 0.72rem;
-            color: var(--text-dim);
-            opacity: 0.6;
-            font-family: 'Space Mono', monospace;
-        }
+        .footer { position: fixed; bottom: 1.5rem; font-size: 0.68rem; color: var(--text-muted); opacity: 0.6; font-family: 'Space Mono', monospace; text-align: center; }
+        .tagline { font-size: 0.82rem; color: var(--text-muted); font-style: italic; margin-bottom: 2rem; }
     </style>
 </head>
 <body>
     <div class="grid-bg"></div>
     <div class="glow"></div>
-
     <div class="content">
-        <div class="logo">
-            <span class="dot"></span>
-            GOVERNANCE CONTINUITY
-        </div>
-        <h1>Leadership disruption is the <span>new operating condition.</span></h1>
+        <div class="logo"><span class="dot"></span>GOVERNANCE CONTINUITY ARCHITECTURE</div>
+        <p class="kicker">The Next Operating System</p>
+        <h1>Organizations have operating systems for technology. <span>Not for authority.</span></h1>
         <p class="subtitle">
-            Map decision authority, define AI governance boundaries, and maintain trust and compliance when leadership is disrupted. A systems-design approach to governance in the AI age.
+            Leadership disruption reveals governance design flaws that organizations have been able to ignore for decades.
+            GCA is the governance operating system for the AI age — ensuring decision continuity even when leaders are absent.
         </p>
+        <div class="pillars">
+            <div class="pillar"><div class="pillar-icon">&#9881;</div><div class="pillar-label">Authority Registry</div></div>
+            <div class="pillar"><div class="pillar-icon">&#8645;</div><div class="pillar-label">Escalation Maps</div></div>
+            <div class="pillar"><div class="pillar-icon">&#9670;</div><div class="pillar-label">Decision Continuity</div></div>
+            <div class="pillar"><div class="pillar-icon">&#9888;</div><div class="pillar-label">Signal Monitoring</div></div>
+        </div>
+        <p class="tagline">Leadership may be volatile. Governance must remain continuous.</p>
         <div class="actions">
             <a href="/register" class="btn btn-primary">Get Started</a>
             <a href="/login" class="btn btn-ghost">Sign In</a>
         </div>
     </div>
-
-    <div class="footer">Group 7 — Impact Project</div>
+    <div class="footer">MIT Sloan — Group 7 Impact Project</div>
 </body>
 </html>

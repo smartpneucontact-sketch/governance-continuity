@@ -1,82 +1,29 @@
 {% extends 'base.html' %}
-{% block title %}{{ 'Edit' if domain else 'Add' }} Decision Domain{% endblock %}
+{% block title %}{{ 'Edit' if domain else 'Add' }} Decision Domain — GCA{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h1>{{ 'Edit' if domain else 'Add' }} Decision Domain</h1>
-    <p>Define the decision area, assign authority, set risk levels, and configure AI governance boundaries.</p>
-</div>
-
+<div class="page-header"><h1>{{ 'Edit' if domain else 'Add' }} Decision Domain</h1></div>
 <div class="card form-card">
     <form method="POST">
-        <div class="form-group">
-            <label for="name">Domain Name</label>
-            <input type="text" name="name" id="name" required value="{{ domain.name if domain else '' }}" placeholder="e.g. Annual Budget Approval">
-        </div>
-        <div class="form-group">
-            <label for="description">Description</label>
-            <textarea name="description" id="description" placeholder="What decisions fall under this domain?">{{ domain.description if domain else '' }}</textarea>
+        <div class="form-group"><label for="name">Domain Name</label><input type="text" name="name" id="name" required value="{{ domain.name if domain else '' }}" placeholder="e.g. AI Model Deployment"></div>
+        <div class="form-group"><label for="description">Description</label><textarea name="description" id="description">{{ domain.description if domain else '' }}</textarea></div>
+        <div class="grid-2">
+            <div class="form-group"><label for="category">Category</label>
+                <select name="category" id="category"><option value="strategic" {{ 'selected' if domain and domain.category == 'strategic' }}>Strategic</option><option value="operational" {{ 'selected' if domain and domain.category == 'operational' }}>Operational</option><option value="compliance" {{ 'selected' if domain and domain.category == 'compliance' }}>Compliance</option><option value="financial" {{ 'selected' if domain and domain.category == 'financial' }}>Financial</option></select></div>
+            <div class="form-group"><label for="risk_level">Risk Level</label>
+                <select name="risk_level" id="risk_level"><option value="low" {{ 'selected' if domain and domain.risk_level == 'low' }}>Low</option><option value="medium" {{ 'selected' if domain and domain.risk_level == 'medium' }}>Medium</option><option value="high" {{ 'selected' if domain and domain.risk_level == 'high' }}>High</option><option value="critical" {{ 'selected' if domain and domain.risk_level == 'critical' }}>Critical</option></select></div>
         </div>
         <div class="grid-2">
-            <div class="form-group">
-                <label for="category">Category</label>
-                <select name="category" id="category" required>
-                    <option value="strategic" {{ 'selected' if domain and domain.category == 'strategic' }}>Strategic</option>
-                    <option value="operational" {{ 'selected' if domain and domain.category == 'operational' }}>Operational</option>
-                    <option value="compliance" {{ 'selected' if domain and domain.category == 'compliance' }}>Compliance</option>
-                    <option value="financial" {{ 'selected' if domain and domain.category == 'financial' }}>Financial</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="risk_level">Risk Level</label>
-                <select name="risk_level" id="risk_level" required>
-                    <option value="low" {{ 'selected' if domain and domain.risk_level == 'low' }}>Low</option>
-                    <option value="medium" {{ 'selected' if domain and domain.risk_level == 'medium' }}>Medium</option>
-                    <option value="high" {{ 'selected' if domain and domain.risk_level == 'high' }}>High</option>
-                    <option value="critical" {{ 'selected' if domain and domain.risk_level == 'critical' }}>Critical</option>
-                </select>
-            </div>
+            <div class="form-group"><label for="authority_role_id">Authority Role</label>
+                <select name="authority_role_id" id="authority_role_id"><option value="">— Unassigned —</option>{% for r in roles %}<option value="{{ r.id }}" {{ 'selected' if domain and domain.authority_role_id == r.id }}>{{ r.role_title }}{% if r.status == 'disrupted' %} ⚠{% endif %}</option>{% endfor %}</select></div>
+            <div class="form-group"><label for="decision_velocity">Decision Velocity</label>
+                <select name="decision_velocity" id="decision_velocity"><option value="fast" {{ 'selected' if domain and domain.decision_velocity == 'fast' }}>Fast</option><option value="normal" {{ 'selected' if domain and domain.decision_velocity == 'normal' or not domain }}>Normal</option><option value="slow" {{ 'selected' if domain and domain.decision_velocity == 'slow' }}>Slow</option><option value="stalled" {{ 'selected' if domain and domain.decision_velocity == 'stalled' }}>Stalled</option></select></div>
         </div>
-        <div class="form-group">
-            <label for="authority_leader_id">Decision Authority (Leader)</label>
-            <select name="authority_leader_id" id="authority_leader_id">
-                <option value="">— Unassigned —</option>
-                {% for l in leaders %}
-                <option value="{{ l.id }}" {{ 'selected' if domain and domain.authority_leader_id == l.id }}>
-                    {{ l.name }} — {{ l.title }}
-                    {% if l.status == 'disrupted' %} ⚠ DISRUPTED{% endif %}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div style="border-top: 1px solid var(--border); margin: 1.5rem 0; padding-top: 1.5rem;">
-            <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem;">AI Governance Boundaries</div>
-        </div>
-
-        <div class="form-group">
-            <label for="ai_support_level">AI Support Level</label>
-            <select name="ai_support_level" id="ai_support_level">
-                <option value="none" {{ 'selected' if domain and domain.ai_support_level == 'none' }}>None — No AI involvement</option>
-                <option value="advisory" {{ 'selected' if domain and domain.ai_support_level == 'advisory' }}>Advisory — AI provides analysis, human decides</option>
-                <option value="assisted" {{ 'selected' if domain and domain.ai_support_level == 'assisted' }}>Assisted — AI drafts decisions, human approves</option>
-                <option value="autonomous" {{ 'selected' if domain and domain.ai_support_level == 'autonomous' }}>Autonomous — AI decides within defined guardrails</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="ai_boundary_notes">AI Boundary Notes</label>
-            <textarea name="ai_boundary_notes" id="ai_boundary_notes" placeholder="Specify constraints, guardrails, or conditions for AI involvement...">{{ domain.ai_boundary_notes if domain else '' }}</textarea>
-        </div>
-        <div class="form-group">
-            <div class="checkbox-group">
-                <input type="checkbox" name="human_judgment_required" id="human_judgment_required"
-                    {{ 'checked' if (domain and domain.human_judgment_required) or not domain }}>
-                <label for="human_judgment_required">Human judgment is required for final decisions in this domain</label>
-            </div>
-        </div>
-        <div class="btn-group">
-            <button type="submit" class="btn btn-primary">{{ 'Save Changes' if domain else 'Add Domain' }}</button>
-            <a href="{{ url_for('domains_list') }}" class="btn btn-outline">Cancel</a>
-        </div>
+        <div style="border-top:1px solid var(--border);margin:1.5rem 0;padding-top:1.25rem;"><div style="font-size:0.85rem;font-weight:700;color:var(--text-primary);margin-bottom:1rem;">AI Governance Boundaries</div></div>
+        <div class="form-group"><label for="ai_support_level">AI Support Level</label>
+            <select name="ai_support_level" id="ai_support_level"><option value="none" {{ 'selected' if domain and domain.ai_support_level == 'none' }}>None — No AI involvement</option><option value="advisory" {{ 'selected' if domain and domain.ai_support_level == 'advisory' }}>Advisory — AI provides analysis, human decides</option><option value="assisted" {{ 'selected' if domain and domain.ai_support_level == 'assisted' }}>Assisted — AI drafts decisions, human approves</option><option value="autonomous" {{ 'selected' if domain and domain.ai_support_level == 'autonomous' }}>Autonomous — AI within guardrails</option></select></div>
+        <div class="form-group"><label for="ai_boundary_notes">AI Boundary Notes</label><textarea name="ai_boundary_notes" id="ai_boundary_notes" placeholder="Guardrails, constraints, conditions...">{{ domain.ai_boundary_notes if domain else '' }}</textarea></div>
+        <div class="form-group"><div class="checkbox-group"><input type="checkbox" name="human_judgment_required" id="hjr" {{ 'checked' if (domain and domain.human_judgment_required) or not domain }}><label for="hjr">Human judgment required for final decisions</label></div></div>
+        <div class="btn-group"><button type="submit" class="btn btn-primary">{{ 'Save' if domain else 'Add Domain' }}</button><a href="{{ url_for('domains_list') }}" class="btn btn-outline">Cancel</a></div>
     </form>
 </div>
 {% endblock %}

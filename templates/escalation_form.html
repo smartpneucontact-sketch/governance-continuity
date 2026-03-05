@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Edit' if esc else 'Create' }} Escalation Path — GCA{% endblock %}
+{% block content %}
+<div class="page-header"><h1>{{ 'Edit' if esc else 'Create' }} Escalation Path</h1><p>Define who makes decisions when the primary authority is unavailable — and what happens if nobody is.</p></div>
+<div class="card form-card">
+    <form method="POST">
+        <div class="form-group"><label for="name">Escalation Name</label><input type="text" name="name" id="name" required value="{{ esc.name if esc else '' }}" placeholder="e.g. Critical Compliance Escalation"></div>
+        <div class="form-group"><label for="trigger_condition">Trigger Condition</label><textarea name="trigger_condition" id="trigger_condition" required placeholder="When does this escalation fire?">{{ esc.trigger_condition if esc else '' }}</textarea></div>
+        <div class="form-group"><label for="domain_id">Related Decision Domain</label>
+            <select name="domain_id" id="domain_id"><option value="">— Any —</option>{% for d in domains %}<option value="{{ d.id }}" {{ 'selected' if esc and esc.domain_id == d.id }}>{{ d.name }}</option>{% endfor %}</select></div>
+        <div style="border-top:1px solid var(--border);margin:1.5rem 0;padding-top:1.25rem;"><div style="font-size:0.85rem;font-weight:700;color:var(--text-primary);margin-bottom:1rem;">Escalation Steps (in order)</div></div>
+        <div class="grid-3">
+            <div class="form-group"><label for="step1_role_id">Step 1 — Primary</label><select name="step1_role_id" id="step1_role_id"><option value="">—</option>{% for r in roles %}<option value="{{ r.id }}" {{ 'selected' if esc and esc.step1_role_id == r.id }}>{{ r.role_title }}</option>{% endfor %}</select></div>
+            <div class="form-group"><label for="step2_role_id">Step 2 — Secondary</label><select name="step2_role_id" id="step2_role_id"><option value="">—</option>{% for r in roles %}<option value="{{ r.id }}" {{ 'selected' if esc and esc.step2_role_id == r.id }}>{{ r.role_title }}</option>{% endfor %}</select></div>
+            <div class="form-group"><label for="step3_role_id">Step 3 — Final</label><select name="step3_role_id" id="step3_role_id"><option value="">—</option>{% for r in roles %}<option value="{{ r.id }}" {{ 'selected' if esc and esc.step3_role_id == r.id }}>{{ r.role_title }}</option>{% endfor %}</select></div>
+        </div>
+        <div class="grid-2">
+            <div class="form-group"><label for="max_wait_hours">Max Wait Time (hours)</label><input type="number" name="max_wait_hours" id="max_wait_hours" value="{{ esc.max_wait_hours if esc else 24 }}" min="1"></div>
+            <div class="form-group" style="padding-top:1.5rem;"><div class="checkbox-group"><input type="checkbox" name="ai_can_auto_escalate" id="ai_auto" {{ 'checked' if esc and esc.ai_can_auto_escalate }}><label for="ai_auto">AI can auto-escalate if timeout reached</label></div></div>
+        </div>
+        <div class="form-group"><label for="fallback_action">Fallback Action (if all steps exhausted)</label><textarea name="fallback_action" id="fallback_action" placeholder="What happens if nobody in the chain is available?">{{ esc.fallback_action if esc else '' }}</textarea></div>
+        <div class="btn-group"><button type="submit" class="btn btn-primary">{{ 'Save' if esc else 'Create Path' }}</button><a href="{{ url_for('escalations_list') }}" class="btn btn-outline">Cancel</a></div>
+    </form>
+</div>
+{% endblock %}

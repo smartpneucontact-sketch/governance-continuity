@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Authority Registry — GCA{% endblock %}
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <div>
+        <h1>Role-Based Authority Registry</h1>
+        <p>Authority is encoded to roles, not persons. When a person is disrupted, the role — and its decision rights — persist.</p>
+        <p class="subtitle">From leadership dependency to governance infrastructure.</p>
+    </div>
+    <a href="{{ url_for('add_role') }}" class="btn btn-primary">+ Register Role</a>
+</div>
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Authority Role</th><th>Department</th><th>Current Holder</th><th>Status</th><th>Disruption</th><th>Primary Successor</th><th>Backup</th><th>Domains</th><th style="text-align:right;">Actions</th></tr></thead>
+            <tbody>
+            {% for role in roles %}
+            <tr>
+                <td>
+                    <strong>{{ role.role_title }}</strong>
+                    {% if role.authority_scope %}<br><span style="font-size:0.72rem;color:var(--text-muted);">{{ role.authority_scope[:70] }}{{ '...' if role.authority_scope|length > 70 }}</span>{% endif %}
+                </td>
+                <td>{{ role.department }}</td>
+                <td>{{ role.current_holder_name or '—' }}</td>
+                <td><span class="badge badge-{{ role.status }}">{{ role.status }}</span></td>
+                <td>{% if role.disruption_type %}{{ role.disruption_type }}{% if role.expected_return %}<br><span style="font-size:0.7rem;color:var(--text-muted);">Return: {{ role.expected_return.strftime('%b %d') }}</span>{% endif %}{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}</td>
+                <td>{% if role.successor_role %}<span style="font-size:0.8rem;">{{ role.successor_role.role_title }}</span>{% else %}<span style="color:var(--warning);font-size:0.72rem;">⚠ None</span>{% endif %}</td>
+                <td>{% if role.backup_role %}<span style="font-size:0.8rem;">{{ role.backup_role.role_title }}</span>{% else %}<span style="color:var(--text-muted);font-size:0.72rem;">—</span>{% endif %}</td>
+                <td><span style="font-family:'Space Mono',monospace;font-size:0.8rem;">{{ role.decision_domains|length }}</span></td>
+                <td style="text-align:right;">
+                    <div class="btn-group" style="justify-content:flex-end;">
+                        <a href="{{ url_for('edit_role', id=role.id) }}" class="btn btn-outline btn-sm">Edit</a>
+                        {% if role.status == 'active' %}
+                        <a href="{{ url_for('disrupt_role', id=role.id) }}" class="btn btn-warning btn-sm">Disrupt</a>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('restore_role', id=role.id) }}" style="display:inline;"><button type="submit" class="btn btn-success btn-sm">Restore</button></form>
+                        {% endif %}
+                        <form method="POST" action="{{ url_for('delete_role', id=role.id) }}" style="display:inline;" onsubmit="return confirm('Remove {{ role.role_title }}?');"><button type="submit" class="btn btn-danger btn-sm">×</button></form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not roles %}
+            <tr><td colspan="9"><div class="empty-state"><p>No authority roles registered.</p><a href="{{ url_for('add_role') }}" class="btn btn-primary">Register First Role</a></div></td></tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

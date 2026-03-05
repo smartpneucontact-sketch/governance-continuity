@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Governance Continuity{% endblock %}</title>
+    <title>{% block title %}Governance Continuity Architecture{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -22,21 +22,13 @@
             --danger: #EF4444;
             --critical: #DC2626;
             --purple: #8B5CF6;
+            --teal: #14B8A6;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-        }
-
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
         a { color: var(--accent); text-decoration: none; }
         a:hover { text-decoration: underline; }
 
-        /* ── Navigation ───────────────────────────────────────── */
         .nav {
             background: var(--bg-secondary);
             border-bottom: 1px solid var(--border);
@@ -52,192 +44,69 @@
         .nav-brand {
             font-family: 'Space Mono', monospace;
             font-weight: 700;
-            font-size: 0.85rem;
-            letter-spacing: 0.05em;
+            font-size: 0.75rem;
+            letter-spacing: 0.04em;
             color: var(--accent);
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            white-space: nowrap;
         }
-        .nav-brand .dot {
-            width: 8px; height: 8px;
-            background: var(--accent);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--accent);
-        }
-        .nav-links {
-            display: flex;
-            gap: 0.25rem;
-            margin-left: 2rem;
-            list-style: none;
-        }
+        .nav-brand .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 8px var(--accent); }
+        .nav-links { display: flex; gap: 0.15rem; margin-left: 1.5rem; list-style: none; flex-wrap: nowrap; }
         .nav-links a {
-            display: block;
-            padding: 0.5rem 0.85rem;
-            border-radius: 6px;
-            font-size: 0.82rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            transition: all 0.2s;
+            display: block; padding: 0.45rem 0.65rem; border-radius: 6px; font-size: 0.76rem; font-weight: 500;
+            color: var(--text-secondary); transition: all 0.2s; white-space: nowrap;
         }
-        .nav-links a:hover, .nav-links a.active {
-            background: var(--bg-card);
-            color: var(--text-primary);
-            text-decoration: none;
-        }
-        .nav-right {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .nav-user {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-        .nav-logout {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            padding: 0.35rem 0.7rem;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-        .nav-logout:hover {
-            color: var(--danger);
-            border-color: var(--danger);
-            text-decoration: none;
-        }
+        .nav-links a:hover, .nav-links a.active { background: var(--bg-card); color: var(--text-primary); text-decoration: none; }
+        .nav-right { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
+        .nav-user { font-size: 0.8rem; color: var(--text-secondary); }
+        .nav-logout { font-size: 0.72rem; color: var(--text-muted); padding: 0.3rem 0.6rem; border: 1px solid var(--border); border-radius: 4px; transition: all 0.2s; }
+        .nav-logout:hover { color: var(--danger); border-color: var(--danger); text-decoration: none; }
 
-        /* ── Page Layout ──────────────────────────────────────── */
-        .page {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        .page-header {
-            margin-bottom: 2rem;
-        }
-        .page-header h1 {
-            font-family: 'Space Mono', monospace;
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-        }
-        .page-header p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-top: 0.35rem;
-        }
+        .page { max-width: 1320px; margin: 0 auto; padding: 2rem; }
+        .page-header { margin-bottom: 2rem; }
+        .page-header h1 { font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; }
+        .page-header p { color: var(--text-secondary); font-size: 0.88rem; margin-top: 0.35rem; }
+        .page-header .subtitle { font-size: 0.78rem; color: var(--text-muted); font-style: italic; }
 
-        /* ── Cards ────────────────────────────────────────────── */
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 1.25rem 1.5rem;
-        }
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        .card-header h2 {
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-secondary);
-        }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .card-header h2 { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); }
 
-        /* ── Stat Cards ───────────────────────────────────────── */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 1.25rem 1.5rem;
-            position: relative;
-            overflow: hidden;
-        }
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-        }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.3rem; position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
         .stat-card.blue::before { background: var(--accent); }
         .stat-card.green::before { background: var(--success); }
         .stat-card.red::before { background: var(--danger); }
         .stat-card.yellow::before { background: var(--warning); }
         .stat-card.purple::before { background: var(--purple); }
-        .stat-label {
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-        .stat-value {
-            font-family: 'Space Mono', monospace;
-            font-size: 2rem;
-            font-weight: 700;
-            margin-top: 0.25rem;
-        }
+        .stat-card.teal::before { background: var(--teal); }
+        .stat-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 500; }
+        .stat-value { font-family: 'Space Mono', monospace; font-size: 1.8rem; font-weight: 700; margin-top: 0.2rem; }
         .stat-card.blue .stat-value { color: var(--accent); }
         .stat-card.green .stat-value { color: var(--success); }
         .stat-card.red .stat-value { color: var(--danger); }
         .stat-card.yellow .stat-value { color: var(--warning); }
         .stat-card.purple .stat-value { color: var(--purple); }
+        .stat-card.teal .stat-value { color: var(--teal); }
 
-        /* ── Health Score ─────────────────────────────────────── */
-        .health-ring {
-            width: 120px; height: 120px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-            position: relative;
-        }
+        .health-ring { width: 110px; height: 110px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; }
         .health-ring svg { position: absolute; width: 100%; height: 100%; transform: rotate(-90deg); }
-        .health-ring circle {
-            fill: none;
-            stroke-width: 6;
-            stroke-linecap: round;
-        }
+        .health-ring circle { fill: none; stroke-width: 6; stroke-linecap: round; }
         .health-ring .track { stroke: var(--border); }
         .health-ring .fill { stroke: var(--accent); transition: stroke-dasharray 1s ease; }
-        .health-score-text {
-            font-family: 'Space Mono', monospace;
-            font-size: 1.6rem;
-            font-weight: 700;
-            z-index: 1;
-        }
+        .health-score-text { font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; z-index: 1; }
 
-        /* ── Badges ───────────────────────────────────────────── */
-        .badge {
-            display: inline-block;
-            padding: 0.2rem 0.55rem;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
+        .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
         .badge-active { background: rgba(34,197,94,0.15); color: var(--success); }
         .badge-disrupted { background: rgba(239,68,68,0.15); color: var(--danger); }
         .badge-transitioning { background: rgba(245,158,11,0.15); color: var(--warning); }
+        .badge-vacant { background: rgba(139,92,246,0.15); color: var(--purple); }
         .badge-resolved { background: rgba(139,92,246,0.15); color: var(--purple); }
         .badge-mitigated { background: rgba(59,130,246,0.15); color: var(--accent); }
+        .badge-acknowledged { background: rgba(245,158,11,0.15); color: var(--warning); }
 
         .badge-critical { background: rgba(220,38,38,0.15); color: var(--critical); }
         .badge-high { background: rgba(245,158,11,0.15); color: var(--warning); }
@@ -249,249 +118,89 @@
         .badge-assisted { background: rgba(139,92,246,0.15); color: var(--purple); }
         .badge-autonomous { background: rgba(245,158,11,0.15); color: var(--warning); }
 
-        /* ── Tables ───────────────────────────────────────────── */
-        .table-wrap {
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th {
-            text-align: left;
-            padding: 0.65rem 0.8rem;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-muted);
-            border-bottom: 1px solid var(--border);
-        }
-        td {
-            padding: 0.75rem 0.8rem;
-            font-size: 0.85rem;
-            border-bottom: 1px solid rgba(42, 54, 80, 0.5);
-            color: var(--text-secondary);
-        }
-        tr:hover td {
-            background: rgba(59, 130, 246, 0.03);
-        }
-        td strong {
-            color: var(--text-primary);
-        }
+        .badge-info { background: rgba(59,130,246,0.1); color: var(--accent); }
+        .badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
 
-        /* ── Buttons ──────────────────────────────────────────── */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-        .btn-primary {
-            background: var(--accent);
-            color: #fff;
-        }
-        .btn-primary:hover {
-            background: #2563EB;
-            text-decoration: none;
-            color: #fff;
-        }
-        .btn-outline {
-            background: transparent;
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
-        }
-        .btn-outline:hover {
-            background: var(--bg-card);
-            color: var(--text-primary);
-            text-decoration: none;
-        }
-        .btn-danger {
-            background: transparent;
-            color: var(--danger);
-            border: 1px solid rgba(239,68,68,0.3);
-        }
-        .btn-danger:hover {
-            background: rgba(239,68,68,0.1);
-            text-decoration: none;
-        }
-        .btn-warning {
-            background: transparent;
-            color: var(--warning);
-            border: 1px solid rgba(245,158,11,0.3);
-        }
-        .btn-warning:hover {
-            background: rgba(245,158,11,0.1);
-            text-decoration: none;
-        }
-        .btn-success {
-            background: transparent;
-            color: var(--success);
-            border: 1px solid rgba(34,197,94,0.3);
-        }
-        .btn-success:hover {
-            background: rgba(34,197,94,0.1);
-            text-decoration: none;
-        }
-        .btn-sm { padding: 0.3rem 0.65rem; font-size: 0.72rem; }
+        .badge-fast { background: rgba(34,197,94,0.15); color: var(--success); }
+        .badge-normal { background: rgba(59,130,246,0.1); color: var(--accent); }
+        .badge-slow { background: rgba(245,158,11,0.15); color: var(--warning); }
+        .badge-stalled { background: rgba(239,68,68,0.15); color: var(--danger); }
 
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 0.6rem 0.75rem; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+        td { padding: 0.7rem 0.75rem; font-size: 0.82rem; border-bottom: 1px solid rgba(42,54,80,0.5); color: var(--text-secondary); }
+        tr:hover td { background: rgba(59,130,246,0.03); }
+        td strong { color: var(--text-primary); }
+
+        .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: #2563EB; text-decoration: none; color: #fff; }
+        .btn-outline { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+        .btn-outline:hover { background: var(--bg-card); color: var(--text-primary); text-decoration: none; }
+        .btn-danger { background: transparent; color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+        .btn-danger:hover { background: rgba(239,68,68,0.1); text-decoration: none; }
+        .btn-warning { background: transparent; color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+        .btn-warning:hover { background: rgba(245,158,11,0.1); text-decoration: none; }
+        .btn-success { background: transparent; color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
+        .btn-success:hover { background: rgba(34,197,94,0.1); text-decoration: none; }
+        .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
         .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
-        /* ── Forms ────────────────────────────────────────────── */
-        .form-group {
-            margin-bottom: 1.25rem;
+        .form-group { margin-bottom: 1.25rem; }
+        label { display: block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.4rem; }
+        input[type="text"], input[type="email"], input[type="password"], input[type="date"], input[type="number"], select, textarea {
+            width: 100%; padding: 0.6rem 0.85rem; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px;
+            color: var(--text-primary); font-family: inherit; font-size: 0.85rem; transition: border-color 0.2s;
         }
-        label {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-secondary);
-            margin-bottom: 0.4rem;
-        }
-        input[type="text"], input[type="email"], input[type="password"],
-        input[type="date"], select, textarea {
-            width: 100%;
-            padding: 0.6rem 0.85rem;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 0.85rem;
-            transition: border-color 0.2s;
-        }
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px var(--accent-glow);
-        }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
         textarea { min-height: 80px; resize: vertical; }
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-            accent-color: var(--accent);
-        }
-        .checkbox-group label {
-            margin-bottom: 0;
-            text-transform: none;
-            font-size: 0.85rem;
-        }
+        .checkbox-group { display: flex; align-items: center; gap: 0.5rem; }
+        .checkbox-group input[type="checkbox"] { width: auto; accent-color: var(--accent); }
+        .checkbox-group label { margin-bottom: 0; text-transform: none; font-size: 0.85rem; }
+        .form-card { max-width: 680px; }
 
-        .form-card {
-            max-width: 640px;
-        }
-
-        /* ── Flash Messages ───────────────────────────────────── */
-        .flashes {
-            margin-bottom: 1.5rem;
-        }
-        .flash {
-            padding: 0.65rem 1rem;
-            border-radius: 6px;
-            font-size: 0.82rem;
-            margin-bottom: 0.5rem;
-            border: 1px solid;
-        }
+        .flashes { margin-bottom: 1.5rem; }
+        .flash { padding: 0.65rem 1rem; border-radius: 6px; font-size: 0.82rem; margin-bottom: 0.5rem; border: 1px solid; }
         .flash-success { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.25); color: var(--success); }
         .flash-error { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.25); color: var(--danger); }
         .flash-warning { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.25); color: var(--warning); }
 
-        /* ── Grid helpers ─────────────────────────────────────── */
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
 
-        /* ── Log list ─────────────────────────────────────────── */
-        .log-item {
-            padding: 0.6rem 0;
-            border-bottom: 1px solid rgba(42, 54, 80, 0.4);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .log-action { font-size: 0.82rem; color: var(--text-secondary); }
-        .log-time { font-size: 0.7rem; color: var(--text-muted); font-family: 'Space Mono', monospace; }
+        .log-item { padding: 0.55rem 0; border-bottom: 1px solid rgba(42,54,80,0.4); display: flex; justify-content: space-between; align-items: center; }
+        .log-action { font-size: 0.8rem; color: var(--text-secondary); }
+        .log-time { font-size: 0.68rem; color: var(--text-muted); font-family: 'Space Mono', monospace; }
 
-        /* ── AI Matrix ────────────────────────────────────────── */
-        .matrix-cell {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-        .ai-bar {
-            height: 6px;
-            border-radius: 3px;
-            flex: 1;
-            max-width: 80px;
-            background: var(--border);
-            overflow: hidden;
-        }
-        .ai-bar-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 0.5s ease;
-        }
-        .ai-bar-fill.none { width: 0%; }
-        .ai-bar-fill.advisory { width: 33%; background: var(--accent); }
-        .ai-bar-fill.assisted { width: 66%; background: var(--purple); }
-        .ai-bar-fill.autonomous { width: 100%; background: var(--warning); }
+        .alert-bar { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; padding: 0.75rem 1.1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.8rem; }
+        .alert-bar .pulse { width: 10px; height: 10px; background: var(--danger); border-radius: 50%; animation: pulse 2s ease-in-out infinite; flex-shrink: 0; }
+        @keyframes pulse { 0%,100% { opacity:1; box-shadow:0 0 0 0 rgba(239,68,68,0.4); } 50% { opacity:0.7; box-shadow:0 0 0 8px rgba(239,68,68,0); } }
+        .alert-text { font-size: 0.82rem; color: var(--danger); }
 
-        .human-required {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            font-size: 0.75rem;
-            color: var(--success);
-        }
-        .human-not-required {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
+        .signal-bar { border-radius: 8px; padding: 0.75rem 1.1rem; margin-bottom: 0.75rem; display: flex; align-items: flex-start; gap: 0.8rem; }
+        .signal-bar.critical { background: rgba(220,38,38,0.06); border: 1px solid rgba(220,38,38,0.2); }
+        .signal-bar.warning { background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.2); }
+        .signal-bar.info { background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.2); }
+        .signal-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 0.35rem; flex-shrink: 0; }
+        .signal-dot.critical { background: var(--critical); }
+        .signal-dot.warning { background: var(--warning); }
+        .signal-dot.info { background: var(--accent); }
 
-        /* ── Disruption alert ─────────────────────────────────── */
-        .alert-bar {
-            background: rgba(239,68,68,0.06);
-            border: 1px solid rgba(239,68,68,0.2);
-            border-radius: 8px;
-            padding: 0.8rem 1.2rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
-        .alert-bar .pulse {
-            width: 10px; height: 10px;
-            background: var(--danger);
-            border-radius: 50%;
-            animation: pulse 2s ease-in-out infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
-            50% { opacity: 0.7; box-shadow: 0 0 0 8px rgba(239,68,68,0); }
-        }
-        .alert-text { font-size: 0.85rem; color: var(--danger); }
-
-        /* ── Empty State ──────────────────────────────────────── */
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: var(--text-muted);
-        }
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
         .empty-state p { font-size: 0.9rem; margin-bottom: 1rem; }
 
-        /* ── Responsive ───────────────────────────────────────── */
+        /* Escalation flow */
+        .esc-flow { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .esc-step { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 0.35rem 0.65rem; font-size: 0.75rem; color: var(--text-secondary); }
+        .esc-arrow { color: var(--text-muted); font-size: 0.75rem; }
+        .esc-fallback { font-size: 0.72rem; color: var(--warning); font-style: italic; }
+
+        /* Principle cards */
+        .principle-card { padding: 1rem; background: var(--bg-secondary); border-radius: 8px; border-left: 3px solid; }
+        .principle-card strong { font-size: 0.82rem; display: block; margin-bottom: 0.3rem; }
+        .principle-card p { font-size: 0.76rem; color: var(--text-secondary); margin: 0; }
+
         @media (max-width: 768px) {
             .nav { padding: 0 1rem; }
             .nav-links { display: none; }
@@ -504,17 +213,16 @@
 <body>
     {% if current_user.is_authenticated %}
     <nav class="nav">
-        <div class="nav-brand">
-            <span class="dot"></span>
-            GOVERNANCE CONTINUITY
-        </div>
+        <div class="nav-brand"><span class="dot"></span>GCA</div>
         <ul class="nav-links">
             <li><a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}">Dashboard</a></li>
-            <li><a href="{{ url_for('leaders_list') }}" class="{{ 'active' if 'leader' in request.endpoint }}">Leaders</a></li>
-            <li><a href="{{ url_for('domains_list') }}" class="{{ 'active' if 'domain' in request.endpoint }}">Decisions</a></li>
-            <li><a href="{{ url_for('disruptions_list') }}" class="{{ 'active' if 'disruption' in request.endpoint }}">Disruptions</a></li>
+            <li><a href="{{ url_for('registry') }}" class="{{ 'active' if 'role' in request.endpoint or request.endpoint == 'registry' }}">Authority Registry</a></li>
+            <li><a href="{{ url_for('domains_list') }}" class="{{ 'active' if 'domain' in request.endpoint }}">Decision Domains</a></li>
+            <li><a href="{{ url_for('escalations_list') }}" class="{{ 'active' if 'escalation' in request.endpoint }}">Escalation Maps</a></li>
+            <li><a href="{{ url_for('signals_list') }}" class="{{ 'active' if 'signal' in request.endpoint }}">Signals</a></li>
             <li><a href="{{ url_for('ai_matrix') }}" class="{{ 'active' if request.endpoint == 'ai_matrix' }}">AI Matrix</a></li>
-            <li><a href="{{ url_for('audit_log') }}" class="{{ 'active' if request.endpoint == 'audit_log' }}">Audit Log</a></li>
+            <li><a href="{{ url_for('disruptions_list') }}" class="{{ 'active' if 'disruption' in request.endpoint }}">Disruptions</a></li>
+            <li><a href="{{ url_for('audit_log') }}" class="{{ 'active' if request.endpoint == 'audit_log' }}">Audit</a></li>
         </ul>
         <div class="nav-right">
             <span class="nav-user">{{ current_user.name }}</span>
@@ -522,18 +230,8 @@
         </div>
     </nav>
     {% endif %}
-
     <div class="page">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="flashes">
-            {% for category, message in messages %}
-            <div class="flash flash-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        </div>
-        {% endif %}
-        {% endwith %}
-
+        {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<div class="flashes">{% for category, message in messages %}<div class="flash flash-{{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}{% endwith %}
         {% block content %}{% endblock %}
     </div>
 </body>

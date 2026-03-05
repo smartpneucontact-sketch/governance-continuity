@@ -1,15 +1,13 @@
 {% extends 'base.html' %}
-{% block title %}Flag Disruption — {{ leader.name }}{% endblock %}
+{% block title %}Flag Disruption — {{ role.role_title }}{% endblock %}
 {% block content %}
 <div class="page-header">
-    <h1>Flag Leadership Disruption</h1>
-    <p>Recording disruption for <strong>{{ leader.name }}</strong> — {{ leader.title }}, {{ leader.department }}</p>
+    <h1>Flag Authority Disruption</h1>
+    <p>Recording disruption for <strong>{{ role.role_title }}</strong> — currently held by {{ role.current_holder_name or 'no one' }} ({{ role.department }})</p>
 </div>
-
 <div class="card form-card">
     <form method="POST">
-        <div class="form-group">
-            <label for="disruption_type">Disruption Type</label>
+        <div class="form-group"><label for="disruption_type">Disruption Type</label>
             <select name="disruption_type" id="disruption_type" required>
                 <option value="">Select type...</option>
                 <option value="medical">Medical Leave</option>
@@ -18,32 +16,20 @@
                 <option value="exit">Departure / Exit</option>
                 <option value="restructuring">Restructuring</option>
                 <option value="other">Other</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="expected_return">Expected Return Date (if applicable)</label>
-            <input type="date" name="expected_return" id="expected_return">
-        </div>
-        <div class="form-group">
-            <label for="description">Description & Context</label>
-            <textarea name="description" id="description" placeholder="Brief context for the disruption event. This will be recorded in the governance log."></textarea>
-        </div>
-        {% if leader.successor %}
-        <div style="padding: 0.75rem; background: rgba(34,197,94,0.06); border-radius: 6px; border: 1px solid rgba(34,197,94,0.2); margin-bottom: 1.25rem;">
-            <div style="font-size: 0.8rem; color: var(--success);">
-                <strong>Interim authority</strong> will transfer to <strong>{{ leader.successor.name }}</strong> ({{ leader.successor.title }})
-            </div>
-        </div>
-        {% else %}
-        <div style="padding: 0.75rem; background: rgba(245,158,11,0.06); border-radius: 6px; border: 1px solid rgba(245,158,11,0.2); margin-bottom: 1.25rem;">
-            <div style="font-size: 0.8rem; color: var(--warning);">
-                ⚠ <strong>No successor designated.</strong> Decision domains under this leader will be unguarded. Consider assigning a successor first.
-            </div>
+            </select></div>
+        <div class="form-group"><label for="expected_return">Expected Return Date</label><input type="date" name="expected_return" id="expected_return"></div>
+        <div class="form-group"><label for="description">Context</label><textarea name="description" id="description" placeholder="Brief context for the governance log..."></textarea></div>
+        {% set affected = role.decision_domains|length %}
+        {% if affected > 0 %}
+        <div style="padding: 0.75rem; background: rgba(239,68,68,0.06); border-radius: 6px; border: 1px solid rgba(239,68,68,0.2); margin-bottom: 1rem; font-size: 0.8rem; color: var(--danger);">
+            <strong>{{ affected }} decision domain(s)</strong> will lose their primary authority holder.
+            {% if role.successor_role %}Interim authority transfers to <strong>{{ role.successor_role.role_title }}</strong>.
+            {% else %}⚠ <strong>No successor role designated.</strong> Governance signal will be generated.{% endif %}
         </div>
         {% endif %}
         <div class="btn-group">
             <button type="submit" class="btn btn-primary">Record Disruption</button>
-            <a href="{{ url_for('leaders_list') }}" class="btn btn-outline">Cancel</a>
+            <a href="{{ url_for('registry') }}" class="btn btn-outline">Cancel</a>
         </div>
     </form>
 </div>

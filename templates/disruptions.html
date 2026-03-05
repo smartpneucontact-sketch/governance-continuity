@@ -1,78 +1,34 @@
 {% extends 'base.html' %}
-{% block title %}Disruption Events — Governance Continuity{% endblock %}
+{% block title %}Disruptions — GCA{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h1>Disruption Events</h1>
-    <p>Track and manage leadership disruption events, interim authority assignments, and recovery timelines.</p>
-</div>
+<div class="page-header"><h1>Disruption Events</h1><p>Track leadership disruptions, interim authority transfers, and recovery timelines.</p></div>
 
 {% for event in events %}
-<div class="card" style="margin-bottom: 1rem; {% if event.status == 'active' %}border-left: 3px solid var(--danger);{% elif event.status == 'mitigated' %}border-left: 3px solid var(--accent);{% else %}border-left: 3px solid var(--success);{% endif %}">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+<div class="card" style="margin-bottom:1rem;{% if event.status == 'active' %}border-left:3px solid var(--danger);{% elif event.status == 'mitigated' %}border-left:3px solid var(--accent);{% else %}border-left:3px solid var(--success);{% endif %}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
         <div>
-            <strong style="font-size: 1rem;">{{ event.leader.name }}</strong>
-            <span style="color: var(--text-muted); font-size: 0.82rem;"> — {{ event.leader.title }}</span>
-            <br>
-            <span style="font-size: 0.78rem; color: var(--text-muted);">
-                {{ event.event_type | capitalize }} · Started {{ event.started_at.strftime('%b %d, %Y') }}
-                {% if event.resolved_at %} · Resolved {{ event.resolved_at.strftime('%b %d, %Y') }}{% endif %}
-            </span>
+            <strong style="font-size:1rem;">{{ event.role.role_title }}</strong>
+            <span style="color:var(--text-muted);font-size:0.82rem;"> — {{ event.role.current_holder_name or 'holder' }}</span>
+            <br><span style="font-size:0.78rem;color:var(--text-muted);">{{ event.event_type|capitalize }} · Started {{ event.started_at.strftime('%b %d, %Y') }}{% if event.resolved_at %} · Resolved {{ event.resolved_at.strftime('%b %d') }}{% endif %} · {{ event.affected_domains_count }} domain(s) affected</span>
         </div>
         <span class="badge badge-{{ event.status }}">{{ event.status }}</span>
     </div>
-
-    {% if event.description %}
-    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">{{ event.description }}</p>
-    {% endif %}
-
-    {% if event.interim_leader %}
-    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
-        <strong>Interim authority:</strong> {{ event.interim_leader.name }} ({{ event.interim_leader.title }})
-    </div>
-    {% endif %}
-
-    {% if event.impact_assessment %}
-    <div style="font-size: 0.8rem; margin-bottom: 0.5rem;">
-        <strong style="color: var(--text-secondary);">Impact Assessment:</strong>
-        <span style="color: var(--text-secondary);">{{ event.impact_assessment }}</span>
-    </div>
-    {% endif %}
-
-    {% if event.actions_taken %}
-    <div style="font-size: 0.8rem; margin-bottom: 0.75rem;">
-        <strong style="color: var(--text-secondary);">Actions Taken:</strong>
-        <span style="color: var(--text-secondary);">{{ event.actions_taken }}</span>
-    </div>
-    {% endif %}
-
+    {% if event.description %}<p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.75rem;">{{ event.description }}</p>{% endif %}
+    {% if event.interim_role %}<div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.5rem;"><strong>Interim authority:</strong> {{ event.interim_role.role_title }} ({{ event.interim_role.current_holder_name or 'TBD' }})</div>{% endif %}
     {% if event.status != 'resolved' %}
-    <form method="POST" action="{{ url_for('update_disruption', id=event.id) }}" style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: 0.5rem;">
-        <div class="grid-2" style="gap: 0.75rem;">
-            <div class="form-group" style="margin-bottom: 0.5rem;">
-                <label for="impact_{{ event.id }}">Impact Assessment</label>
-                <textarea name="impact_assessment" id="impact_{{ event.id }}" style="min-height: 50px;" placeholder="Describe governance impact...">{{ event.impact_assessment or '' }}</textarea>
-            </div>
-            <div class="form-group" style="margin-bottom: 0.5rem;">
-                <label for="actions_{{ event.id }}">Actions Taken</label>
-                <textarea name="actions_taken" id="actions_{{ event.id }}" style="min-height: 50px;" placeholder="Document mitigation steps...">{{ event.actions_taken or '' }}</textarea>
-            </div>
+    <form method="POST" action="{{ url_for('update_disruption', id=event.id) }}" style="border-top:1px solid var(--border);padding-top:0.75rem;margin-top:0.5rem;">
+        <div class="grid-2" style="gap:0.75rem;">
+            <div class="form-group" style="margin-bottom:0.5rem;"><label>Impact Assessment</label><textarea name="impact_assessment" style="min-height:50px;">{{ event.impact_assessment or '' }}</textarea></div>
+            <div class="form-group" style="margin-bottom:0.5rem;"><label>Actions Taken</label><textarea name="actions_taken" style="min-height:50px;">{{ event.actions_taken or '' }}</textarea></div>
         </div>
         <div class="btn-group">
             <button type="submit" name="status" value="{{ event.status }}" class="btn btn-outline btn-sm">Save Notes</button>
-            <button type="submit" name="status" value="mitigated" class="btn btn-outline btn-sm" style="color: var(--accent); border-color: rgba(59,130,246,0.3);">Mark Mitigated</button>
+            <button type="submit" name="status" value="mitigated" class="btn btn-outline btn-sm" style="color:var(--accent);border-color:rgba(59,130,246,0.3);">Mitigated</button>
             <button type="submit" name="status" value="resolved" class="btn btn-success btn-sm">Resolve</button>
         </div>
     </form>
     {% endif %}
 </div>
 {% endfor %}
-
-{% if not events %}
-<div class="card">
-    <div class="empty-state">
-        <p>No disruption events recorded.</p>
-        <p style="font-size: 0.8rem; color: var(--text-muted);">Events are created when you flag a leader as disrupted.</p>
-    </div>
-</div>
-{% endif %}
+{% if not events %}<div class="card"><div class="empty-state"><p>No disruption events recorded.</p></div></div>{% endif %}
 {% endblock %}

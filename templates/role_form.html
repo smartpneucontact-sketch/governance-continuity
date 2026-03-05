@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Edit' if role else 'Register' }} Authority Role — GCA{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>{{ 'Edit' if role else 'Register' }} Authority Role</h1>
+    <p>Define role-encoded authority — the role persists even when the person changes.</p>
+</div>
+<div class="card form-card">
+    <form method="POST">
+        <div class="grid-2">
+            <div class="form-group"><label for="role_title">Role Title</label><input type="text" name="role_title" id="role_title" required value="{{ role.role_title if role else '' }}" placeholder="e.g. VP of Engineering"></div>
+            <div class="form-group"><label for="department">Department</label><input type="text" name="department" id="department" required value="{{ role.department if role else '' }}"></div>
+        </div>
+        <div class="form-group"><label for="authority_scope">Authority Scope</label><textarea name="authority_scope" id="authority_scope" placeholder="What decisions does this role have authority over?">{{ role.authority_scope if role else '' }}</textarea></div>
+        <div class="grid-2">
+            <div class="form-group"><label for="current_holder_name">Current Holder (Person)</label><input type="text" name="current_holder_name" id="current_holder_name" value="{{ role.current_holder_name if role else '' }}" placeholder="The person currently in this role"></div>
+            <div class="form-group"><label for="current_holder_email">Holder Email</label><input type="email" name="current_holder_email" id="current_holder_email" value="{{ role.current_holder_email if role else '' }}"></div>
+        </div>
+        <div style="border-top: 1px solid var(--border); margin: 1.5rem 0; padding-top: 1.25rem;">
+            <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem;">Succession Chain</div>
+        </div>
+        <div class="grid-2">
+            <div class="form-group"><label for="successor_role_id">Primary Successor Role</label>
+                <select name="successor_role_id" id="successor_role_id"><option value="">— None —</option>
+                {% for r in all_roles %}<option value="{{ r.id }}" {{ 'selected' if role and role.successor_role_id == r.id }}>{{ r.role_title }} ({{ r.department }})</option>{% endfor %}</select></div>
+            <div class="form-group"><label for="backup_role_id">Backup Role</label>
+                <select name="backup_role_id" id="backup_role_id"><option value="">— None —</option>
+                {% for r in all_roles %}<option value="{{ r.id }}" {{ 'selected' if role and role.backup_role_id == r.id }}>{{ r.role_title }} ({{ r.department }})</option>{% endfor %}</select></div>
+        </div>
+        {% if role %}<div class="form-group"><label for="notes">Notes</label><textarea name="notes" id="notes">{{ role.notes or '' }}</textarea></div>{% endif %}
+        <div class="btn-group">
+            <button type="submit" class="btn btn-primary">{{ 'Save Changes' if role else 'Register Role' }}</button>
+            <a href="{{ url_for('registry') }}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,73 +1,51 @@
-# Governance Continuity — Operating Model Tool
+# Governance Continuity Architecture (GCA)
 
-**Group 7 Impact Project** — Leadership Disruption as a New Operating Condition
+**The Next Operating System: Governance**
+*MIT Sloan — Group 7 Impact Project*
 
-A web application for mapping decision authority, defining AI governance boundaries, and maintaining organizational trust and compliance during leadership disruption.
+Organizations have operating systems for technology, but not for authority. GCA is the governance operating system for the AI age — ensuring decision continuity even when leaders are absent.
 
-## Features
+*Leadership may be volatile. Governance must remain continuous.*
 
-- **Dashboard** — Real-time governance health score with leadership status overview
-- **Leadership Roster** — Track leaders, availability status, and succession plans
-- **Decision Domains** — Map decision authority, risk levels, and ownership
-- **Disruption Events** — Flag, track, and manage leadership disruptions with interim authority transfer
-- **AI Governance Matrix** — Visualize AI support boundaries across all decision domains
-- **Audit Log** — Full compliance trail of every governance action
+## Architecture Components
+
+- **Role-Based Authority Registry** — Authority encoded to roles, not persons. When a person is disrupted, the role and its decision rights persist.
+- **Decision Continuity Framework** — Map every decision domain to an authority role, risk level, and AI governance boundary.
+- **AI-Assisted Escalation Maps** — Define what happens when authority is unclear. Multi-step escalation with auto-escalation and fallback actions.
+- **Governance Signal Monitoring** — Detect authority gaps, decision stalls, role overload, and trust erosion before they become crises.
+- **AI Governance Matrix** — Visualize where AI supports decisions and where human judgment remains essential.
+- **Governance Continuity Score** — Single metric measuring architecture health across 5 weighted dimensions.
+
+## What Success Looks Like
+
+- Persistent decision velocity under leadership volatility
+- Preserved institutional judgment
+- Reduced governance paralysis
+- AI that augments rather than destabilizes authority
 
 ## Deploy to Railway
 
-### 1. Push to GitHub
-
 ```bash
-cd governance-app
-git init
-git add .
-git commit -m "Initial commit - Governance Continuity app"
+cd governance-continuity-architecture
+git init && git add . && git commit -m "Initial commit"
+git branch -M main
 git remote add origin https://github.com/YOUR_USERNAME/governance-continuity.git
 git push -u origin main
 ```
 
-### 2. Deploy on Railway
-
-1. Go to [railway.com](https://railway.com) and sign in with GitHub
-2. Click **"New Project"** → **"Deploy from GitHub Repo"**
-3. Select your `governance-continuity` repository
-4. Railway will auto-detect the Python app and deploy it
-
-### 3. Set Environment Variables (in Railway dashboard)
-
-| Variable | Value |
-|----------|-------|
-| `SECRET_KEY` | A random string (e.g. `python -c "import secrets; print(secrets.token_hex(32))"`) |
-| `PORT` | `8080` (Railway sets this automatically) |
-
-### 4. (Optional) Add PostgreSQL
-
-For persistent data, add a PostgreSQL plugin in Railway:
-
-1. In your project, click **"New"** → **"Database"** → **"PostgreSQL"**
-2. Railway will auto-set `DATABASE_URL` — the app handles this automatically
-
-Without PostgreSQL, the app uses SQLite (data persists on the Railway volume but resets on redeploy).
+Then on [railway.com](https://railway.com): New Project → Deploy from GitHub → Select repo → Set `SECRET_KEY` env variable.
 
 ## Run Locally
 
 ```bash
 pip install -r requirements.txt
 python app.py
+# Visit http://localhost:5000
 ```
-
-Visit `http://localhost:5000`
 
 ## Demo Data
 
-The app seeds with demo leadership data on first run — 8 leaders, 10 decision domains, and 2 active disruption events — so you can explore the full functionality immediately.
-
-## Architecture
-
-- **Flask** + **SQLAlchemy** + **Flask-Login**
-- **Gunicorn** for production serving
-- **SQLite** (default) or **PostgreSQL** (Railway)
-- No JavaScript frameworks — pure server-rendered HTML with CSS
+Auto-seeds with 8 authority roles, 10 decision domains, 4 escalation paths, 2 active disruptions, and 4 governance signals.
 
 ---
 
