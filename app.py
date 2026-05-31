@@ -625,6 +625,45 @@ def ai_matrix():
     return render_template('ai_matrix.html', domains=domains)
 
 
+# ─── Architecture & Technical Feasibility ──────────────────────────────────────
+
+@app.route('/architecture')
+@login_required
+def architecture():
+    roles = AuthorityRole.query.all()
+    domains = DecisionDomain.query.all()
+    escalations = EscalationPath.query.all()
+    signals = GovernanceSignal.query.all()
+    active_signals = [s for s in signals if s.status == 'active']
+    ai_governed = [d for d in domains if d.ai_support_level != 'none']
+    auto_escalations = [e for e in escalations if e.ai_can_auto_escalate]
+    logs_count = GovernanceLog.query.count()
+
+    # Live KPIs — the metrics the governance layer continuously tracks
+    kpis = {
+        'roles_tracked': len(roles),
+        'domains_mapped': len(domains),
+        'escalation_paths': len(escalations),
+        'signals_processed': len(signals),
+        'active_signals': len(active_signals),
+        'ai_governed_domains': len(ai_governed),
+        'ai_coverage_pct': int(len(ai_governed) / max(len(domains), 1) * 100),
+        'auto_escalation_paths': len(auto_escalations),
+        'audit_events': logs_count,
+        'human_in_loop_domains': sum(1 for d in domains if d.human_judgment_required),
+    }
+
+    # Indicative AI API cost model — signal monitoring runs on an LLM call per event.
+    # Assumes ~1.2K input + 0.4K output tokens per governance signal at Haiku-class pricing.
+    cost_per_signal_usd = 0.0021
+    monitored_events_per_month = max(len(domains) * 30, 300)  # one sweep per domain per day
+    kpis['est_monthly_ai_cost_usd'] = round(monitored_events_per_month * cost_per_signal_usd, 2)
+    kpis['monitored_events_per_month'] = monitored_events_per_month
+    kpis['cost_per_signal_usd'] = cost_per_signal_usd
+
+    return render_template('architecture.html', kpis=kpis)
+
+
 # ─── Audit Log ─────────────────────────────────────────────────────────────────
 
 @app.route('/audit-log')

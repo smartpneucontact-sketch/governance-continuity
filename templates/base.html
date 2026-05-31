@@ -216,6 +216,7 @@
         <div class="nav-brand"><span class="dot"></span>GCA</div>
         <ul class="nav-links">
             <li><a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}">Dashboard</a></li>
+            <li><a href="{{ url_for('architecture') }}" class="{{ 'active' if request.endpoint == 'architecture' }}">Architecture</a></li>
             <li><a href="{{ url_for('registry') }}" class="{{ 'active' if 'role' in request.endpoint or request.endpoint == 'registry' }}">Authority Registry</a></li>
             <li><a href="{{ url_for('domains_list') }}" class="{{ 'active' if 'domain' in request.endpoint }}">Decision Domains</a></li>
             <li><a href="{{ url_for('escalations_list') }}" class="{{ 'active' if 'escalation' in request.endpoint }}">Escalation Maps</a></li>

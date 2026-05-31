@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Governance Continuity Architecture — GCA{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Governance Continuity Architecture</h1>
+    <p>One system, four layers. Operational signals flow in, governance encodes who decides, the action layer executes with auditability, and the organization absorbs disruption.</p>
+    <p class="subtitle">Leadership may be volatile. Governance must remain continuous.</p>
+</div>
+
+<!-- ── 4-Layer Model: Inputs → Governance → Action → Outcomes ── -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h2>The Continuity Pipeline</h2></div>
+    <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;align-items:stretch;gap:0.5rem;">
+        {% set arch = [
+            ('Inputs', 'var(--teal)', 'Operational Signals', ['AI Insight', 'Workforce Signals', 'Compliance Events']),
+            ('Governance Layer', 'var(--accent)', 'Role-Encoded Authority', ['Decision Domains', 'Escalation & HITL Checkpoints', 'Decision rights persist regardless of who is present']),
+            ('Action Layer', 'var(--purple)', 'Execution', ['Decisions & Approvals', 'Continuity Workflows', 'Auditability']),
+            ('Outcomes', 'var(--success)', 'Resilience', ['Continuity: operations persist', 'Trust: legitimacy holds', 'Reduced latency: decisions don’t stall']),
+        ] %}
+        {% for title, color, headline, items in arch %}
+        <div class="card" style="background:var(--bg-secondary);border-top:3px solid {{ color }};padding:1rem;">
+            <div style="font-family:'Space Mono',monospace;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:{{ color }};">{{ title }}</div>
+            <div style="font-size:0.85rem;font-weight:700;margin:0.4rem 0 0.6rem;color:var(--text-primary);">{{ headline }}</div>
+            {% for it in items %}<div style="font-size:0.74rem;color:var(--text-secondary);padding:0.25rem 0;border-bottom:1px solid rgba(42,54,80,0.4);">{{ it }}</div>{% endfor %}
+        </div>
+        {% if not loop.last %}<div style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:1.4rem;">→</div>{% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ── AI Accelerates Analysis (Not Judgment) ── -->
+<div class="grid-2" style="margin-bottom:1.5rem;">
+    <div class="card" style="border-top:3px solid var(--accent);">
+        <div class="card-header"><h2>⚙ AI Accelerates Analysis</h2></div>
+        {% for r in ['Monitor governance signals', 'Detect escalation delays', 'Identify decision bottlenecks', 'Surface continuity risks', 'Maintain decision audit trails', 'Recommend escalation paths'] %}
+        <div style="font-size:0.8rem;color:var(--text-secondary);padding:0.4rem 0;border-bottom:1px solid rgba(42,54,80,0.4);"><span style="color:var(--accent);">▸</span> {{ r }}</div>
+        {% endfor %}
+    </div>
+    <div class="card" style="border-top:3px solid var(--success);">
+        <div class="card-header"><h2>◇ Humans Keep Judgment</h2></div>
+        {% for r in ['Judgment & authority', 'Accountability', 'Exception handling', 'Ethical decisions', 'Validating legitimacy', 'Human-in-the-loop approvals'] %}
+        <div style="font-size:0.8rem;color:var(--text-secondary);padding:0.4rem 0;border-bottom:1px solid rgba(42,54,80,0.4);"><span style="color:var(--success);">▸</span> {{ r }}</div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ── Technical Feasibility: live KPIs ── -->
+<div class="page-header" style="margin:2.5rem 0 1rem;">
+    <h1 style="font-size:1.15rem;">Why This Is Technically Feasible</h1>
+    <p>The architecture runs on a standard web stack with a thin AI layer. Every component below is already live in this deployment — these KPIs are read from the running database.</p>
+</div>
+
+<div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(155px,1fr));">
+    <div class="stat-card blue"><div class="stat-label">Roles Tracked</div><div class="stat-value">{{ kpis.roles_tracked }}</div></div>
+    <div class="stat-card teal"><div class="stat-label">Domains Mapped</div><div class="stat-value">{{ kpis.domains_mapped }}</div></div>
+    <div class="stat-card purple"><div class="stat-label">AI Coverage</div><div class="stat-value">{{ kpis.ai_coverage_pct }}%</div></div>
+    <div class="stat-card green"><div class="stat-label">Signals Processed</div><div class="stat-value">{{ kpis.signals_processed }}</div></div>
+    <div class="stat-card yellow"><div class="stat-label">Auto-Escalation Paths</div><div class="stat-value">{{ kpis.auto_escalation_paths }}</div></div>
+    <div class="stat-card blue"><div class="stat-label">Audit Events Logged</div><div class="stat-value">{{ kpis.audit_events }}</div></div>
+</div>
+
+<div class="grid-2">
+    <!-- Tech stack (Slide 6) -->
+    <div class="card">
+        <div class="card-header"><h2>Tech Stack — 6 Layers</h2></div>
+        {% set stack = [
+            ('Security', 'Role-based permissions · audit trails · access control', 'var(--danger)'),
+            ('Decision Interface', 'Dashboards · notifications · approvals · continuity alerts', 'var(--accent)'),
+            ('Governance', 'Decision domains · role-encoded authority · HITL checkpoints', 'var(--teal)'),
+            ('AI', 'Signal analysis · anomaly detection · escalation routing · summarization', 'var(--purple)'),
+            ('Memory / State', 'Context persistence · decision history · continuity state', 'var(--warning)'),
+            ('Data', 'Org charts · policies · HR records · API integrations · real-time feeds', 'var(--success)'),
+        ] %}
+        {% for name, desc, color in stack %}
+        <div class="principle-card" style="border-color:{{ color }};margin-bottom:0.6rem;"><strong style="color:{{ color }};">{{ name }}</strong><p>{{ desc }}</p></div>
+        {% endfor %}
+    </div>
+
+    <!-- AI API cost model -->
+    <div class="card">
+        <div class="card-header"><h2>AI API Cost Model</h2></div>
+        <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:1rem;">The AI layer is a thin, metered call per governance event — not a model we train. Cost scales linearly with the number of monitored decision events, which keeps unit economics predictable.</p>
+        <table>
+            <tbody>
+                <tr><td><strong>Cost per signal evaluated</strong></td><td style="text-align:right;font-family:'Space Mono',monospace;color:var(--accent);">${{ '%.4f'|format(kpis.cost_per_signal_usd) }}</td></tr>
+                <tr><td>Tokens per evaluation</td><td style="text-align:right;font-family:'Space Mono',monospace;">~1.2K in / 0.4K out</td></tr>
+                <tr><td>Monitored events / month</td><td style="text-align:right;font-family:'Space Mono',monospace;">{{ '{:,}'.format(kpis.monitored_events_per_month) }}</td></tr>
+                <tr><td>Human-in-the-loop domains</td><td style="text-align:right;font-family:'Space Mono',monospace;">{{ kpis.human_in_loop_domains }}</td></tr>
+                <tr><td><strong>Est. monthly AI API cost</strong></td><td style="text-align:right;font-family:'Space Mono',monospace;font-weight:700;color:var(--success);">${{ '%.2f'|format(kpis.est_monthly_ai_cost_usd) }}</td></tr>
+            </tbody>
+        </table>
+        <p style="font-size:0.72rem;color:var(--text-muted);margin-top:1rem;font-style:italic;">Haiku-class pricing assumption. Because the AI only analyzes and routes — humans retain judgment — token volume stays bounded and cost grows with org size, not with risk.</p>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1rem;margin-top:1.5rem;">
+    <div class="principle-card" style="border-color:var(--accent);"><strong>Commodity stack</strong><p>Flask + PostgreSQL + a metered LLM API. No bespoke infrastructure or model training required.</p></div>
+    <div class="principle-card" style="border-color:var(--purple);"><strong>Stateless AI calls</strong><p>Each signal evaluation is an independent API call — horizontally scalable and trivially cacheable.</p></div>
+    <div class="principle-card" style="border-color:var(--success);"><strong>Bounded unit economics</strong><p>Cost-per-decision is a known KPI. Spend scales with org size, not with crisis severity.</p></div>
+    <div class="principle-card" style="border-color:var(--warning);"><strong>Auditable by design</strong><p>Every AI recommendation and human action is logged — compliance and explainability come for free.</p></div>
+</div>
+{% endblock %}
