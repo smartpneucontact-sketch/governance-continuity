@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}90-Day Pilot — GCA{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>90-Day Pilot Path</h1>
+    <p>A minimum viable proof for Governance Continuity Architecture: measurable value, bounded risk, human accountability.</p>
+    <p class="subtitle">Pilot outcome: prove AI can improve governance flow without taking authority away from people.</p>
+</div>
+
+<div class="card" style="margin-bottom:1.5rem;">
+    <div style="display:flex;align-items:center;gap:1.5rem;">
+        <div style="flex:1;">
+            <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-muted);margin-bottom:.35rem;"><span>Overall progress</span><span style="font-family:'Space Mono',monospace;">{{ done }}/{{ total }}</span></div>
+            <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;"><div style="height:100%;width:{{ (done/total*100) if total else 0 }}%;background:var(--teal);border-radius:4px;"></div></div>
+        </div>
+        <div style="text-align:right;"><div style="font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);">Current phase</div><div style="font-family:'Space Mono',monospace;font-weight:700;color:var(--teal);text-transform:uppercase;">{{ current }}</div></div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
+    {% for key, label in phases %}
+    {% set items = by_phase[key] %}
+    {% set all_done = items and items|selectattr('done')|list|length == items|length %}
+    <div class="phase {{ 'current' if key == current }} {{ 'done' if all_done }}">
+        <h3>{{ label }}{% if all_done %} <span class="badge badge-accepted" style="margin-left:.3rem;">done</span>{% elif key == current %} <span class="badge badge-teal" style="margin-left:.3rem;">now</span>{% endif %}</h3>
+        {% for m in items %}
+        <form method="POST" action="{{ url_for('pilot_toggle', id=m.id) }}" class="ms {{ 'done' if m.done }}">
+            <button type="submit" title="Toggle">{{ '✓' if m.done else '' }}</button>
+            <span>{{ m.item }}</span>
+        </form>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card" style="margin-top:1.5rem;">
+    <div class="card-header"><h2>Run-phase evidence (live from the system)</h2></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
+        <div class="metric"><div class="v" style="color:var(--accent);">{% if metrics.decision_latency_hours is not none %}{{ metrics.decision_latency_hours }}h{% else %}—{% endif %}</div><div class="l">Latency</div><div class="d">signal → action</div></div>
+        <div class="metric"><div class="v" style="color:var(--teal);">{{ metrics.evaluated }}</div><div class="l">Coverage</div><div class="d">signals evaluated</div></div>
+        <div class="metric"><div class="v" style="color:var(--purple);">{{ metrics.hitl_overrides }}</div><div class="l">Overrides</div><div class="d">all with rationale</div></div>
+        <div class="metric"><div class="v" style="color:var(--success);">{{ metrics.hitl_compliance }}%</div><div class="l">Trust</div><div class="d">HITL compliance</div></div>
+    </div>
+</div>
+{% endblock %}

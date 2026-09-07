@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Controls — GCA{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Designed for Trustworthy Scale</h1>
+    <p>Controls make AI governable, not mysterious. Each risk from the design maps to a control that is actually implemented in this system.</p>
+    <p class="subtitle">Aligned to NIST AI RMF: transparency, accountability, human oversight.</p>
+</div>
+
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="ctrl" style="border-bottom:1px solid var(--border);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);"><div>Risk</div><div>Control</div><div>Where it lives in GCA</div></div>
+    <div class="ctrl"><div class="r">Hallucination</div><div class="c">Retrieval from bounded context only; source limits; HITL for high-stakes outputs.</div><div class="w">LLM sees only the registry, the related domain, and its escalation paths. Any recommended role not in the registry is rejected before it is stored.</div></div>
+    <div class="ctrl"><div class="r">Authority drift</div><div class="c">Role registry + escalation rules — not ad hoc decisions.</div><div class="w">AI can only route to registered roles. Critical/high-risk domains and human-judgment domains are forced to HITL regardless of model output.</div></div>
+    <div class="ctrl"><div class="r">Privacy / security</div><div class="c">RBAC, audit trails, approved data pathways.</div><div class="w">Login required on every route; API key held only in server environment; every AI call and human decision written to the audit log.</div></div>
+    <div class="ctrl"><div class="r">Adoption</div><div class="c">Training + transparent purpose and limits.</div><div class="w">Every AI output shows model, confidence, rationale, token cost and whether the rule-based fallback was used. Pilot page tracks user training.</div></div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header"><h2>Operational principles</h2></div>
+        <div class="pipe" style="flex-direction:column;">
+            <div class="st"><div class="t">Stateless</div><div class="s">Each evaluation is an independent call with the full context assembled fresh. Scale by adding workers.</div></div>
+            <div class="st"><div class="t">Metered</div><div class="s">{{ '{:,}'.format(metrics.tokens_in) }} input / {{ '{:,}'.format(metrics.tokens_out) }} output tokens across {{ metrics.ai_calls }} calls. Cost stays forecastable.</div></div>
+            <div class="st"><div class="t">Logged</div><div class="s">Recommendation, confidence, rationale, override and reviewer are all persisted. Audit quality: {{ metrics.audit_quality }}%.</div></div>
+            <div class="st"><div class="t">HITL</div><div class="s">{{ metrics.hitl_compliance }}% of high-stakes outputs reviewed by a human. {{ metrics.hitl_pending }} pending.</div></div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h2>AI call log (metered)</h2></div>
+        <div class="table-wrap"><table>
+            <thead><tr><th>When</th><th>Model</th><th>In</th><th>Out</th><th>ms</th><th>Mode</th></tr></thead>
+            <tbody>{% for c in calls %}<tr>
+                <td style="font-family:'Space Mono',monospace;font-size:.7rem;white-space:nowrap;">{{ c.created_at.strftime('%m-%d %H:%M') }}</td>
+                <td style="font-size:.74rem;">{{ c.model }}</td>
+                <td style="font-family:'Space Mono',monospace;font-size:.74rem;">{{ c.tokens_in }}</td>
+                <td style="font-family:'Space Mono',monospace;font-size:.74rem;">{{ c.tokens_out }}</td>
+                <td style="font-family:'Space Mono',monospace;font-size:.74rem;">{{ c.latency_ms }}</td>
+                <td>{% if c.fallback %}<span class="badge badge-warning" title="{{ c.error }}">fallback</span>{% else %}<span class="badge badge-teal">llm</span>{% endif %}</td>
+            </tr>{% endfor %}
+            {% if not calls %}<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No AI calls yet.</td></tr>{% endif %}</tbody>
+        </table></div>
+        {% if not metrics.llm_configured %}<div style="margin-top:.75rem;font-size:.74rem;color:var(--warning);">ANTHROPIC_API_KEY is not set. Set it as a Railway environment variable to switch from fallback to live LLM evaluation.</div>{% endif %}
+    </div>
+</div>
+{% endblock %}

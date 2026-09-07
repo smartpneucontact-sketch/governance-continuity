@@ -201,6 +201,38 @@
         .principle-card strong { font-size: 0.82rem; display: block; margin-bottom: 0.3rem; }
         .principle-card p { font-size: 0.76rem; color: var(--text-secondary); margin: 0; }
 
+        .layer { border-radius: 10px; padding: 1rem 1.25rem; border: 1px solid var(--border); }
+        .layer h3 { font-family: 'Space Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.6rem; }
+        .layer.data { background: linear-gradient(180deg, rgba(139,92,246,0.08), var(--bg-card)); } .layer.data h3 { color: var(--purple); }
+        .layer.ai { background: linear-gradient(180deg, rgba(20,184,166,0.08), var(--bg-card)); } .layer.ai h3 { color: var(--teal); }
+        .layer.human { background: linear-gradient(180deg, rgba(245,158,11,0.08), var(--bg-card)); } .layer.human h3 { color: var(--warning); }
+        .layer ul { list-style: none; font-size: 0.78rem; color: var(--text-secondary); line-height: 1.8; }
+        .layer ul li::before { content: '▸ '; color: var(--text-muted); }
+        .metric { text-align: center; }
+        .metric .v { font-family: 'Space Mono', monospace; font-size: 1.6rem; font-weight: 700; }
+        .metric .l { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-top: 0.15rem; }
+        .metric .d { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.2rem; }
+        .pipe { display: flex; align-items: stretch; gap: 0.4rem; flex-wrap: wrap; }
+        .pipe .st { flex: 1; min-width: 120px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 0.8rem; position: relative; }
+        .pipe .st .n { font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--teal); letter-spacing: 0.1em; }
+        .pipe .st .t { font-weight: 700; font-size: 0.8rem; margin: 0.15rem 0; }
+        .pipe .st .s { font-size: 0.7rem; color: var(--text-muted); }
+        .ai-box { background: rgba(20,184,166,0.06); border: 1px solid rgba(20,184,166,0.25); border-radius: 8px; padding: 0.75rem 0.9rem; margin-top: 0.6rem; font-size: 0.78rem; }
+        .ai-box .h { font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; color: var(--teal); margin-bottom: 0.3rem; }
+        .badge-teal { background: rgba(20,184,166,0.15); color: var(--teal); }
+        .badge-pending { background: rgba(245,158,11,0.15); color: var(--warning); }
+        .badge-accepted { background: rgba(34,197,94,0.15); color: var(--success); }
+        .badge-overridden { background: rgba(139,92,246,0.15); color: var(--purple); }
+        .phase { border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; background: var(--bg-card); }
+        .phase.current { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(20,184,166,0.12); }
+        .phase.done { opacity: 0.75; }
+        .phase h3 { font-size: 0.85rem; margin-bottom: 0.6rem; }
+        .ms { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0; font-size: 0.8rem; color: var(--text-secondary); }
+        .ms.done { color: var(--text-muted); text-decoration: line-through; }
+        .ms button { background: none; border: 1px solid var(--border); border-radius: 4px; width: 20px; height: 20px; cursor: pointer; color: var(--success); font-size: 0.7rem; }
+        .ms.done button { background: rgba(34,197,94,0.15); border-color: var(--success); }
+        .ctrl { display: grid; grid-template-columns: 1.1fr 1.6fr 1.2fr; gap: 1rem; padding: 0.8rem 0; border-bottom: 1px solid rgba(42,54,80,0.5); font-size: 0.8rem; align-items: start; }
+        .ctrl .r { color: var(--danger); font-weight: 700; } .ctrl .c { color: var(--text-secondary); } .ctrl .w { color: var(--teal); font-size: 0.75rem; }
         @media (max-width: 768px) {
             .nav { padding: 0 1rem; }
             .nav-links { display: none; }
@@ -216,12 +248,14 @@
         <div class="nav-brand"><span class="dot"></span>GCA</div>
         <ul class="nav-links">
             <li><a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}">Dashboard</a></li>
-            <li><a href="{{ url_for('architecture') }}" class="{{ 'active' if request.endpoint == 'architecture' }}">Architecture</a></li>
             <li><a href="{{ url_for('registry') }}" class="{{ 'active' if 'role' in request.endpoint or request.endpoint == 'registry' }}">Authority Registry</a></li>
             <li><a href="{{ url_for('domains_list') }}" class="{{ 'active' if 'domain' in request.endpoint }}">Decision Domains</a></li>
             <li><a href="{{ url_for('escalations_list') }}" class="{{ 'active' if 'escalation' in request.endpoint }}">Escalation Maps</a></li>
             <li><a href="{{ url_for('signals_list') }}" class="{{ 'active' if 'signal' in request.endpoint }}">Signals</a></li>
+            <li><a href="{{ url_for('hitl_queue') }}" class="{{ 'active' if 'hitl' in request.endpoint }}">HITL Review</a></li>
             <li><a href="{{ url_for('ai_matrix') }}" class="{{ 'active' if request.endpoint == 'ai_matrix' }}">AI Matrix</a></li>
+            <li><a href="{{ url_for('controls') }}" class="{{ 'active' if request.endpoint == 'controls' }}">Controls</a></li>
+            <li><a href="{{ url_for('pilot') }}" class="{{ 'active' if 'pilot' in request.endpoint }}">Pilot</a></li>
             <li><a href="{{ url_for('disruptions_list') }}" class="{{ 'active' if 'disruption' in request.endpoint }}">Disruptions</a></li>
             <li><a href="{{ url_for('audit_log') }}" class="{{ 'active' if request.endpoint == 'audit_log' }}">Audit</a></li>
         </ul>

@@ -1,52 +1,70 @@
-# Governance Continuity Architecture (GCA)
+# Governance Continuity Architecture (GCA) — V3
 
-**The Next Operating System: Governance**
+**The governance operating system for the AI age.**
 *MIT Sloan — Group 7 Impact Project*
 
-Organizations have operating systems for technology, but not for authority. GCA is the governance operating system for the AI age — ensuring decision continuity even when leaders are absent.
+> AI supports governance continuity — not automated leadership.
+> Humans decide. AI supports.
 
-*Leadership may be volatile. Governance must remain continuous.*
+Organizations have operating systems for technology, but not for authority. GCA encodes authority to roles, routes decisions through escalation paths, and uses an LLM to evaluate governance signals — while humans retain authority, judgment, and accountability.
 
-## Architecture Components
+## Three layers
 
-- **Role-Based Authority Registry** — Authority encoded to roles, not persons. When a person is disrupted, the role and its decision rights persist.
-- **Decision Continuity Framework** — Map every decision domain to an authority role, risk level, and AI governance boundary.
-- **AI-Assisted Escalation Maps** — Define what happens when authority is unclear. Multi-step escalation with auto-escalation and fallback actions.
-- **Governance Signal Monitoring** — Detect authority gaps, decision stalls, role overload, and trust erosion before they become crises.
-- **AI Governance Matrix** — Visualize where AI supports decisions and where human judgment remains essential.
-- **Governance Continuity Score** — Single metric measuring architecture health across 5 weighted dimensions.
+| Layer | What it holds | Where in the app |
+|---|---|---|
+| **Data** | Roles, decision domains, escalation paths, disruptions, signals | Authority Registry · Decision Domains · Escalation Maps · Disruptions |
+| **AI (LLMOps)** | Evaluate relevance → route to accountable role → log everything | Signals (Evaluate) · Controls (call log) |
+| **Human** | Authority, judgment, accountability, exception handling | HITL Review · Audit |
 
-## What Success Looks Like
+## The LLMOps loop
 
-- Persistent decision velocity under leadership volatility
-- Preserved institutional judgment
-- Reduced governance paralysis
-- AI that augments rather than destabilizes authority
+`SIGNAL → EVALUATE → ROUTE → LOG → LEARN`
+
+1. **Signal** — a governance event is detected (automatically on disruption, or manually).
+2. **Evaluate** — the LLM scores severity and recommends a route, using only a bounded context: the authority registry, the related domain, and its escalation paths.
+3. **Route** — low-stakes signals are routed directly; anything critical/high-risk goes to the HITL queue.
+4. **Log** — recommendation, confidence, rationale, tokens, and any human override are persisted.
+5. **Learn** — override rationales are reviewable in one place to refine playbooks and prompts.
+
+If `ANTHROPIC_API_KEY` is not set (or the API fails), a deterministic rule-based fallback runs instead, so the pipeline always completes and the demo never blocks.
+
+## Success metrics (dashboard)
+
+- **Continuity Score** — weighted readiness across roles, domains, succession, escalation, signals
+- **Decision Latency** — hours from signal detected → accountable human action
+- **HITL Compliance** — % of high-risk AI outputs actually reviewed by a human
+- **Audit Quality** — % of closed decisions with a logged rationale
 
 ## Deploy to Railway
 
 ```bash
-cd governance-continuity-architecture
-git init && git add . && git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/governance-continuity.git
-git push -u origin main
+git add -A
+git commit -m "GCA V3 - LLMOps loop, HITL review, pilot tracker"
+git push
 ```
 
-Then on [railway.com](https://railway.com): New Project → Deploy from GitHub → Select repo → Set `SECRET_KEY` env variable.
+Railway environment variables:
 
-## Run Locally
+| Variable | Required | Notes |
+|---|---|---|
+| `SECRET_KEY` | yes | any random string |
+| `ANTHROPIC_API_KEY` | no | enables live LLM evaluation; without it the app runs in fallback mode |
+| `GCA_MODEL` | no | defaults to `claude-sonnet-4-6` |
+| `DATABASE_URL` | auto | set by Railway if you add Postgres |
+
+Existing V2 databases upgrade automatically on first start (missing columns are added).
+
+## Run locally
 
 ```bash
 pip install -r requirements.txt
-python app.py
-# Visit http://localhost:5000
+export ANTHROPIC_API_KEY=sk-...   # optional
+python app.py                      # http://localhost:5000
 ```
 
-## Demo Data
+## Demo data
 
-Auto-seeds with 8 authority roles, 10 decision domains, 4 escalation paths, 2 active disruptions, and 4 governance signals.
+8 authority roles · 10 decision domains · 4 escalation paths · 2 active disruptions · 5 governance signals (one already through the full loop) · 16 pilot milestones.
 
 ---
-
 *Group 7: Margaret Wood, Ronald C Owens Jr, Arsen Khanguieldyan, Craig Kallin*

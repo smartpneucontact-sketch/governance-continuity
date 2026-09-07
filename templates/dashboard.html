@@ -3,193 +3,124 @@
 {% block content %}
 <div class="page-header">
     <h1>Governance Continuity Architecture</h1>
-    <p>The governance operating system for the AI age — real-time decision continuity under leadership volatility.</p>
+    <p>AI supports governance continuity — not automated leadership. Humans decide. AI supports.</p>
     <p class="subtitle">Organizations have operating systems for technology, but not authority. This is that system.</p>
 </div>
 
 {% if stats.active_disruptions > 0 %}
-<div class="alert-bar">
-    <div class="pulse"></div>
-    <span class="alert-text">
-        <strong>{{ stats.active_disruptions }} active disruption{{ 's' if stats.active_disruptions > 1 }}</strong> —
-        {{ stats.disrupted_roles }} authority role{{ 's' if stats.disrupted_roles > 1 }} currently disrupted.
-        {% for d in active_disruptions %}{{ d.role.role_title }}{{ ', ' if not loop.last }}{% endfor %}
-    </span>
+<div class="alert-bar"><div class="pulse"></div>
+    <span class="alert-text"><strong>{{ stats.active_disruptions }} active disruption{{ 's' if stats.active_disruptions > 1 }}</strong> —
+    {% for d in active_disruptions %}{{ d.role.role_title }}{{ ', ' if not loop.last }}{% endfor %}.
+    {% if m.hitl_pending %}<strong>{{ m.hitl_pending }}</strong> AI recommendation{{ 's' if m.hitl_pending > 1 }} awaiting human review.{% endif %}</span>
+    {% if m.hitl_pending %}<a href="{{ url_for('hitl_queue') }}" class="btn btn-warning btn-sm" style="margin-left:auto;">Open HITL queue</a>{% endif %}
 </div>
 {% endif %}
 
-{% if active_signals %}
-{% for signal in active_signals[:3] %}
-<div class="signal-bar {{ signal.severity }}">
-    <div class="signal-dot {{ signal.severity }}"></div>
-    <div>
-        <div style="font-size: 0.8rem; color: var(--text-primary); font-weight: 600;">{{ signal.title }}</div>
-        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem;">{{ signal.description[:120] }}{{ '...' if signal.description|length > 120 }}</div>
+<!-- Three-layer model -->
+<div class="grid-3" style="margin-bottom:1.5rem;">
+    <div class="layer data">
+        <h3>Data Layer</h3>
+        <ul>
+            <li>{{ stats.total_roles }} authority roles (org chart + policies)</li>
+            <li>{{ stats.total_domains }} decision domains ({{ stats.critical_domains }} critical)</li>
+            <li>{{ stats.escalation_paths }} escalation paths</li>
+            <li>{{ stats.active_disruptions }} active disruptions · {{ stats.active_signals }} live signals</li>
+        </ul>
     </div>
-    <span class="badge badge-{{ signal.severity }}" style="margin-left: auto; flex-shrink: 0;">{{ signal.severity }}</span>
+    <div class="layer ai">
+        <h3>AI Layer — LLMOps</h3>
+        <ul>
+            <li>Model: <span style="font-family:'Space Mono',monospace;">{{ m.model }}</span>
+                {% if m.llm_configured %}<span class="badge badge-teal" style="margin-left:.3rem;">live</span>{% else %}<span class="badge badge-warning" style="margin-left:.3rem;">fallback mode</span>{% endif %}</li>
+            <li>{{ m.evaluated }} signals evaluated · {{ m.ai_calls }} calls ({{ m.ai_fallbacks }} rule-based)</li>
+            <li>{{ '{:,}'.format(m.tokens_in + m.tokens_out) }} tokens metered</li>
+            <li>Every recommendation and override logged</li>
+        </ul>
+    </div>
+    <div class="layer human">
+        <h3>Human Layer</h3>
+        <ul>
+            <li>{{ m.hitl_pending }} checkpoint{{ 's' if m.hitl_pending != 1 }} pending review</li>
+            <li>{{ m.hitl_overrides }} override{{ 's' if m.hitl_overrides != 1 }} with rationale</li>
+            <li>Authority, judgment, accountability retained</li>
+            <li>Escalation + exception handling</li>
+        </ul>
+    </div>
 </div>
-{% endfor %}
-{% if active_signals|length > 3 %}
-<div style="text-align: right; margin-bottom: 1rem;"><a href="{{ url_for('signals_list') }}" style="font-size: 0.78rem;">View all {{ active_signals|length }} signals →</a></div>
-{% endif %}
-{% endif %}
+
+<!-- Success metrics (slide 4) -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h2>Success is trusted, traceable decision flow — not model accuracy alone</h2></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;padding:0.5rem 0;">
+        <div class="metric">
+            <div class="v" style="color:{% if stats.continuity_score >= 75 %}var(--success){% elif stats.continuity_score >= 50 %}var(--warning){% else %}var(--danger){% endif %};">{{ stats.continuity_score }}</div>
+            <div class="l">Continuity Score</div><div class="d">Weighted readiness across domains</div>
+        </div>
+        <div class="metric">
+            <div class="v" style="color:var(--accent);">{% if m.decision_latency_hours is not none %}{{ m.decision_latency_hours }}h{% else %}—{% endif %}</div>
+            <div class="l">Decision Latency</div><div class="d">Signal → accountable action</div>
+        </div>
+        <div class="metric">
+            <div class="v" style="color:{% if m.hitl_compliance >= 90 %}var(--success){% elif m.hitl_compliance >= 60 %}var(--warning){% else %}var(--danger){% endif %};">{{ m.hitl_compliance }}%</div>
+            <div class="l">HITL Compliance</div><div class="d">High-risk outputs reviewed by a human</div>
+        </div>
+        <div class="metric">
+            <div class="v" style="color:{% if m.audit_quality >= 90 %}var(--success){% elif m.audit_quality >= 60 %}var(--warning){% else %}var(--danger){% endif %};">{{ m.audit_quality }}%</div>
+            <div class="l">Audit Quality</div><div class="d">Decisions with logged rationale</div>
+        </div>
+    </div>
+</div>
 
 <div class="stats-grid">
-    <div class="stat-card blue">
-        <div class="stat-label">Authority Roles</div>
-        <div class="stat-value">{{ stats.total_roles }}</div>
-    </div>
-    <div class="stat-card green">
-        <div class="stat-label">Active</div>
-        <div class="stat-value">{{ stats.active_roles }}</div>
-    </div>
-    <div class="stat-card red">
-        <div class="stat-label">Disrupted</div>
-        <div class="stat-value">{{ stats.disrupted_roles }}</div>
-    </div>
-    <div class="stat-card purple">
-        <div class="stat-label">Decision Domains</div>
-        <div class="stat-value">{{ stats.total_domains }}</div>
-    </div>
-    <div class="stat-card yellow">
-        <div class="stat-label">Stalled Decisions</div>
-        <div class="stat-value">{{ stats.stalled_domains }}</div>
-    </div>
-    <div class="stat-card teal">
-        <div class="stat-label">Escalation Paths</div>
-        <div class="stat-value">{{ stats.escalation_paths }}</div>
-    </div>
+    <div class="stat-card green"><div class="stat-label">Active Roles</div><div class="stat-value">{{ stats.active_roles }}/{{ stats.total_roles }}</div></div>
+    <div class="stat-card red"><div class="stat-label">Disrupted</div><div class="stat-value">{{ stats.disrupted_roles }}</div></div>
+    <div class="stat-card yellow"><div class="stat-label">Stalled Decisions</div><div class="stat-value">{{ stats.stalled_domains }}</div></div>
+    <div class="stat-card purple"><div class="stat-label">Unassigned Domains</div><div class="stat-value">{{ stats.unassigned_domains }}</div></div>
+    <div class="stat-card teal"><div class="stat-label">Escalation Paths</div><div class="stat-value">{{ stats.escalation_paths }}</div></div>
+    <div class="stat-card blue"><div class="stat-label">Critical Signals</div><div class="stat-value">{{ stats.critical_signals }}</div></div>
 </div>
 
 <div class="grid-2">
-    <!-- Governance Continuity Score -->
     <div class="card">
-        <div class="card-header"><h2>Governance Continuity Score</h2></div>
-        <div style="display: flex; align-items: center; gap: 2rem; padding: 0.5rem 0;">
-            <div class="health-ring">
-                <svg viewBox="0 0 120 120">
-                    <circle class="track" cx="60" cy="60" r="50"/>
-                    <circle class="fill" cx="60" cy="60" r="50"
-                        stroke-dasharray="{{ (stats.continuity_score / 100 * 314.16)|round(1) }} 314.16"
-                        style="stroke: {% if stats.continuity_score >= 75 %}var(--success){% elif stats.continuity_score >= 50 %}var(--warning){% else %}var(--danger){% endif %};"/>
-                </svg>
-                <span class="health-score-text" style="color: {% if stats.continuity_score >= 75 %}var(--success){% elif stats.continuity_score >= 50 %}var(--warning){% else %}var(--danger){% endif %};">{{ stats.continuity_score }}</span>
+        <div class="card-header"><h2>Live Signals</h2><a href="{{ url_for('signals_list') }}" class="btn btn-outline btn-sm">All signals</a></div>
+        {% for s in active_signals[:4] %}
+        <div class="signal-bar {{ s.severity }}" style="margin-bottom:.5rem;">
+            <div class="signal-dot {{ s.severity }}"></div>
+            <div style="flex:1;">
+                <div style="font-size:.8rem;color:var(--text-primary);font-weight:600;">{{ s.title }}</div>
+                <div style="font-size:.7rem;color:var(--text-muted);margin-top:.15rem;">
+                    {% if s.ai_evaluated_at %}AI → {{ s.ai_recommended_role.role_title if s.ai_recommended_role else 'fallback action' }} · <span class="badge badge-{{ s.hitl_status }}">{{ s.hitl_status }}</span>{% else %}Not yet evaluated{% endif %}
+                </div>
             </div>
-            <div style="font-size: 0.76rem; color: var(--text-secondary); line-height: 1.9;">
-                <span style="color: var(--accent);">25%</span> Role availability<br>
-                <span style="color: var(--accent);">25%</span> Domain coverage<br>
-                <span style="color: var(--accent);">20%</span> Succession depth<br>
-                <span style="color: var(--accent);">15%</span> Escalation coverage<br>
-                <span style="color: var(--accent);">15%</span> Signal health
-            </div>
-        </div>
-        {% if stats.continuity_score < 50 %}
-        <div style="margin-top: 0.5rem; padding: 0.6rem; background: rgba(239,68,68,0.06); border-radius: 6px; font-size: 0.78rem; color: var(--danger);">
-            Critical: Governance continuity at risk. Authority gaps and stalled decisions detected.
-        </div>
-        {% elif stats.continuity_score < 75 %}
-        <div style="margin-top: 0.5rem; padding: 0.6rem; background: rgba(245,158,11,0.06); border-radius: 6px; font-size: 0.78rem; color: var(--warning);">
-            Attention: Governance architecture has gaps. Review succession chains and escalation paths.
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Decision Velocity -->
-    <div class="card">
-        <div class="card-header"><h2>Decision Velocity</h2></div>
-        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1rem;">Persistent decision velocity under leadership volatility — a key success metric.</p>
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; text-align: center;">
-            <div>
-                <div style="font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; color: var(--success);">{{ stats.velocity.fast }}</div>
-                <div style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase;">Fast</div>
-            </div>
-            <div>
-                <div style="font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; color: var(--accent);">{{ stats.velocity.normal }}</div>
-                <div style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase;">Normal</div>
-            </div>
-            <div>
-                <div style="font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; color: var(--warning);">{{ stats.velocity.slow }}</div>
-                <div style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase;">Slow</div>
-            </div>
-            <div>
-                <div style="font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; color: var(--danger);">{{ stats.velocity.stalled }}</div>
-                <div style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase;">Stalled</div>
-            </div>
-        </div>
-        {% if stats.stalled_domains > 0 %}
-        <div style="margin-top: 1rem; padding: 0.6rem; background: rgba(239,68,68,0.06); border-radius: 6px; font-size: 0.78rem; color: var(--danger);">
-            {{ stats.stalled_domains }} domain(s) experiencing governance paralysis. Escalation paths may be needed.
-        </div>
-        {% endif %}
-    </div>
-</div>
-
-<div class="grid-2" style="margin-top: 1.5rem;">
-    <!-- Architecture Components -->
-    <div class="card">
-        <div class="card-header"><h2>Architecture Components</h2></div>
-        <div style="display: grid; gap: 0.75rem;">
-            <div class="principle-card" style="border-color: var(--accent);">
-                <strong>Role-Based Authority Registry</strong>
-                <p>Authority encoded to roles, not persons. {{ stats.total_roles }} roles registered, {{ stats.roles_with_succession }} with succession chains.</p>
-            </div>
-            <div class="principle-card" style="border-color: var(--teal);">
-                <strong>AI-Assisted Escalation Maps</strong>
-                <p>{{ stats.escalation_paths }} escalation path(s) defined. Auto-escalation available when authority is unclear.</p>
-            </div>
-            <div class="principle-card" style="border-color: var(--purple);">
-                <strong>Decision Continuity Framework</strong>
-                <p>{{ stats.total_domains }} decision domains mapped. {{ stats.unassigned_domains }} unassigned, {{ stats.stalled_domains }} stalled.</p>
-            </div>
-            <div class="principle-card" style="border-color: var(--warning);">
-                <strong>Governance Signal Monitoring</strong>
-                <p>{{ stats.active_signals }} active signal(s). {{ stats.critical_signals }} critical. Detecting authority gaps and decision stalls.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Activity -->
-    <div class="card">
-        <div class="card-header">
-            <h2>Governance Activity</h2>
-            <a href="{{ url_for('audit_log') }}" class="btn btn-outline btn-sm">Full Log</a>
-        </div>
-        {% for log in recent_logs %}
-        <div class="log-item">
-            <span class="log-action">{{ log.action }}</span>
-            <span class="log-time">{{ log.created_at.strftime('%b %d, %H:%M') }}</span>
+            {% if not s.ai_evaluated_at %}<form method="POST" action="{{ url_for('evaluate_signal_route', id=s.id) }}"><button class="btn btn-outline btn-sm" style="color:var(--teal);border-color:rgba(20,184,166,.3);">Evaluate</button></form>{% endif %}
         </div>
         {% endfor %}
-        {% if not recent_logs %}
-        <div class="empty-state" style="padding: 2rem;"><p>No activity yet.</p></div>
-        {% endif %}
+        {% if not active_signals %}<div class="empty-state" style="padding:1.5rem;"><p>No active signals.</p></div>{% endif %}
+    </div>
+    <div class="card">
+        <div class="card-header"><h2>Decision Velocity</h2></div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;text-align:center;padding:.4rem 0 1rem;">
+            <div class="metric"><div class="v" style="color:var(--success);">{{ stats.velocity.fast }}</div><div class="l">Fast</div></div>
+            <div class="metric"><div class="v" style="color:var(--accent);">{{ stats.velocity.normal }}</div><div class="l">Normal</div></div>
+            <div class="metric"><div class="v" style="color:var(--warning);">{{ stats.velocity.slow }}</div><div class="l">Slow</div></div>
+            <div class="metric"><div class="v" style="color:var(--danger);">{{ stats.velocity.stalled }}</div><div class="l">Stalled</div></div>
+        </div>
+        <div class="card-header" style="margin-top:.5rem;"><h2>Governance Activity</h2><a href="{{ url_for('audit_log') }}" class="btn btn-outline btn-sm">Full log</a></div>
+        {% for log in recent_logs[:5] %}<div class="log-item"><span class="log-action">{{ log.action }}</span><span class="log-time">{{ log.created_at.strftime('%b %d, %H:%M') }}</span></div>{% endfor %}
     </div>
 </div>
 
-<!-- Authority Status Overview -->
-<div style="margin-top: 1.5rem;">
-    <div class="card">
-        <div class="card-header">
-            <h2>Authority Registry — Status Overview</h2>
-            <a href="{{ url_for('registry') }}" class="btn btn-outline btn-sm">Manage Registry</a>
-        </div>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Role (System-Encoded)</th><th>Department</th><th>Current Holder</th><th>Status</th><th>Primary Successor</th><th>Domains</th></tr></thead>
-                <tbody>
-                {% for role in roles %}
-                <tr>
-                    <td><strong>{{ role.role_title }}</strong></td>
-                    <td>{{ role.department }}</td>
-                    <td>{{ role.current_holder_name or '— vacant —' }}</td>
-                    <td><span class="badge badge-{{ role.status }}">{{ role.status }}</span></td>
-                    <td>{% if role.successor_role %}{{ role.successor_role.role_title }}{% else %}<span style="color: var(--warning); font-size: 0.72rem;">⚠ None</span>{% endif %}</td>
-                    <td><span style="font-family: 'Space Mono', monospace; font-size: 0.8rem;">{{ role.decision_domains|length }}</span></td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+<div class="card" style="margin-top:1.5rem;">
+    <div class="card-header"><h2>Authority Registry — Status</h2><a href="{{ url_for('registry') }}" class="btn btn-outline btn-sm">Manage</a></div>
+    <div class="table-wrap"><table>
+        <thead><tr><th>Role (system-encoded)</th><th>Holder</th><th>Status</th><th>Successor</th><th>Domains</th></tr></thead>
+        <tbody>{% for role in roles %}<tr>
+            <td><strong>{{ role.role_title }}</strong> <span style="color:var(--text-muted);font-size:.72rem;">{{ role.department }}</span></td>
+            <td>{{ role.current_holder_name or '— vacant —' }}</td>
+            <td><span class="badge badge-{{ role.status }}">{{ role.status }}</span></td>
+            <td>{% if role.successor_role %}{{ role.successor_role.role_title }}{% else %}<span style="color:var(--warning);font-size:.72rem;">⚠ None</span>{% endif %}</td>
+            <td><span style="font-family:'Space Mono',monospace;font-size:.8rem;">{{ role.decision_domains|length }}</span></td>
+        </tr>{% endfor %}</tbody>
+    </table></div>
 </div>
 {% endblock %}

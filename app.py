@@ -1,5 +1,8 @@
 import os
 import json
+import time
+import urllib.request
+import urllib.error
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -13,6 +16,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
     app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace('postgres://', 'postgresql://', 1)
+
+app.config['ANTHROPIC_API_KEY'] = os.environ.get('ANTHROPIC_API_KEY', '')
+app.config['GCA_MODEL'] = os.environ.get('GCA_MODEL', 'claude-sonnet-4-6')
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -110,8 +116,68 @@ class GovernanceSignal(db.Model):
     detected_at = db.Column(db.DateTime, default=datetime.utcnow)
     resolved_at = db.Column(db.DateTime, nullable=True)
 
-    related_role = db.relationship('AuthorityRole', backref='signals')
+    acknowledged_at = db.Column(db.DateTime, nullable=True)
+
+    # ── AI Layer (LLMOps: EVALUATE + ROUTE) ──
+    ai_severity = db.Column(db.String(20), nullable=True)
+    ai_recommended_role_id = db.Column(db.Integer, db.ForeignKey('authority_role.id'), nullable=True)
+    ai_rationale = db.Column(db.Text, nullable=True)
+    ai_confidence = db.Column(db.Integer, nullable=True)  # 0-100
+    ai_evaluated_at = db.Column(db.DateTime, nullable=True)
+    ai_model = db.Column(db.String(60), nullable=True)
+    ai_tokens_in = db.Column(db.Integer, default=0)
+    ai_tokens_out = db.Column(db.Integer, default=0)
+    ai_fallback = db.Column(db.Boolean, default=False)  # True if rule-based fallback was used
+
+    # ── Human Layer (HITL checkpoint) ──
+    hitl_required = db.Column(db.Boolean, default=False)
+    hitl_status = db.Column(db.String(20), default='none')  # none, pending, accepted, overridden
+    hitl_rationale = db.Column(db.Text, nullable=True)
+    hitl_reviewed_at = db.Column(db.DateTime, nullable=True)
+    hitl_reviewer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    routed_role_id = db.Column(db.Integer, db.ForeignKey('authority_role.id'), nullable=True)  # final human-confirmed route
+
+    related_role = db.relationship('AuthorityRole', foreign_keys=[related_role_id], backref='signals')
     related_domain = db.relationship('DecisionDomain', backref='signals')
+    ai_recommended_role = db.relationship('AuthorityRole', foreign_keys=[ai_recommended_role_id])
+    routed_role = db.relationship('AuthorityRole', foreign_keys=[routed_role_id])
+    hitl_reviewer = db.relationship('User', foreign_keys=[hitl_reviewer_id])
+
+    @property
+    def action_taken_at(self):
+        return self.hitl_reviewed_at or self.resolved_at
+
+    @property
+    def latency_hours(self):
+        t = self.action_taken_at
+        if not t:
+            return None
+        return round((t - self.detected_at).total_seconds() / 3600, 1)
+
+
+class AICallLog(db.Model):
+    """Metered + Logged: every LLM call is recorded for cost forecasting and audit."""
+    id = db.Column(db.Integer, primary_key=True)
+    signal_id = db.Column(db.Integer, db.ForeignKey('governance_signal.id'), nullable=True)
+    model = db.Column(db.String(60), nullable=True)
+    tokens_in = db.Column(db.Integer, default=0)
+    tokens_out = db.Column(db.Integer, default=0)
+    latency_ms = db.Column(db.Integer, default=0)
+    fallback = db.Column(db.Boolean, default=False)
+    error = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    signal = db.relationship('GovernanceSignal', backref='ai_calls')
+
+
+class PilotMilestone(db.Model):
+    """90-Day Pilot Path: Crawl → Walk → Run → Scale."""
+    id = db.Column(db.Integer, primary_key=True)
+    phase = db.Column(db.String(20), nullable=False)  # crawl, walk, run, scale
+    order = db.Column(db.Integer, default=0)
+    item = db.Column(db.String(200), nullable=False)
+    done = db.Column(db.Boolean, default=False)
+    done_at = db.Column(db.DateTime, nullable=True)
 
 
 class DisruptionEvent(db.Model):
@@ -139,6 +205,11 @@ class GovernanceLog(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User', backref='logs')
+
+
+@app.context_processor
+def inject_now():
+    return {'now_utc': datetime.utcnow()}
 
 
 @login_manager.user_loader
@@ -249,7 +320,7 @@ def dashboard():
 
     return render_template('dashboard.html', stats=stats, roles=roles,
                            active_disruptions=active_disruptions, active_signals=active_signals,
-                           recent_logs=recent_logs)
+                           recent_logs=recent_logs, m=compute_llmops_metrics())
 
 
 # ─── Authority Registry ───────────────────────────────────────────────────────
@@ -565,7 +636,7 @@ def signals_list():
         GovernanceSignal.severity.desc(),
         GovernanceSignal.detected_at.desc()
     ).all()
-    return render_template('signals.html', signals=signals)
+    return render_template('signals.html', signals=signals, metrics=compute_llmops_metrics())
 
 
 @app.route('/signals/<int:id>/acknowledge', methods=['POST'])
@@ -573,6 +644,7 @@ def signals_list():
 def acknowledge_signal(id):
     signal = GovernanceSignal.query.get_or_404(id)
     signal.status = 'acknowledged'
+    signal.acknowledged_at = datetime.utcnow()
     db.session.commit()
     log_action(f'Signal acknowledged: {signal.title}')
     flash('Signal acknowledged.', 'success')
@@ -625,45 +697,6 @@ def ai_matrix():
     return render_template('ai_matrix.html', domains=domains)
 
 
-# ─── Architecture & Technical Feasibility ──────────────────────────────────────
-
-@app.route('/architecture')
-@login_required
-def architecture():
-    roles = AuthorityRole.query.all()
-    domains = DecisionDomain.query.all()
-    escalations = EscalationPath.query.all()
-    signals = GovernanceSignal.query.all()
-    active_signals = [s for s in signals if s.status == 'active']
-    ai_governed = [d for d in domains if d.ai_support_level != 'none']
-    auto_escalations = [e for e in escalations if e.ai_can_auto_escalate]
-    logs_count = GovernanceLog.query.count()
-
-    # Live KPIs — the metrics the governance layer continuously tracks
-    kpis = {
-        'roles_tracked': len(roles),
-        'domains_mapped': len(domains),
-        'escalation_paths': len(escalations),
-        'signals_processed': len(signals),
-        'active_signals': len(active_signals),
-        'ai_governed_domains': len(ai_governed),
-        'ai_coverage_pct': int(len(ai_governed) / max(len(domains), 1) * 100),
-        'auto_escalation_paths': len(auto_escalations),
-        'audit_events': logs_count,
-        'human_in_loop_domains': sum(1 for d in domains if d.human_judgment_required),
-    }
-
-    # Indicative AI API cost model — signal monitoring runs on an LLM call per event.
-    # Assumes ~1.2K input + 0.4K output tokens per governance signal at Haiku-class pricing.
-    cost_per_signal_usd = 0.0021
-    monitored_events_per_month = max(len(domains) * 30, 300)  # one sweep per domain per day
-    kpis['est_monthly_ai_cost_usd'] = round(monitored_events_per_month * cost_per_signal_usd, 2)
-    kpis['monitored_events_per_month'] = monitored_events_per_month
-    kpis['cost_per_signal_usd'] = cost_per_signal_usd
-
-    return render_template('architecture.html', kpis=kpis)
-
-
 # ─── Audit Log ─────────────────────────────────────────────────────────────────
 
 @app.route('/audit-log')
@@ -671,6 +704,325 @@ def architecture():
 def audit_log():
     logs = GovernanceLog.query.order_by(GovernanceLog.created_at.desc()).limit(100).all()
     return render_template('audit_log.html', logs=logs)
+
+
+# ─── LLMOps Engine: SIGNAL → EVALUATE → ROUTE → LOG → LEARN ────────────────────
+
+EVALUATE_SYSTEM_PROMPT = """You are the AI layer of a Governance Continuity Architecture (GCA).
+Your job is to EVALUATE a governance signal and recommend a ROUTE — not to make the decision.
+Humans retain authority, judgment, and accountability. You provide intelligence.
+
+Rules:
+- Only recommend roles that appear in the provided authority registry. Never invent a role.
+- Prefer roles whose status is "active". If the primary owner is disrupted, follow the escalation path.
+- Set hitl_required=true for anything touching a critical/high-risk domain or any compliance/financial matter.
+- Be concise. Rationale must reference specific facts from the context (role status, domain risk, escalation steps).
+- Respond ONLY with a JSON object, no markdown fences, no preamble:
+{"severity": "info|warning|critical", "recommended_role_id": <int or null>, "hitl_required": true|false,
+ "confidence": <0-100>, "rationale": "<2-3 sentences>"}"""
+
+
+def build_signal_context(signal):
+    """Data Layer → assemble the bounded, approved context the LLM is allowed to see."""
+    roles = AuthorityRole.query.order_by(AuthorityRole.id).all()
+    registry = [{
+        'id': r.id, 'role': r.role_title, 'department': r.department, 'status': r.status,
+        'holder': r.current_holder_name, 'successor_role_id': r.successor_role_id,
+        'backup_role_id': r.backup_role_id,
+    } for r in roles]
+
+    domain = signal.related_domain
+    domain_ctx = None
+    escalation_ctx = []
+    if domain:
+        domain_ctx = {'id': domain.id, 'name': domain.name, 'category': domain.category,
+                      'risk_level': domain.risk_level, 'velocity': domain.decision_velocity,
+                      'authority_role_id': domain.authority_role_id,
+                      'ai_support_level': domain.ai_support_level,
+                      'human_judgment_required': domain.human_judgment_required}
+        for e in domain.escalation_paths:
+            escalation_ctx.append({'name': e.name, 'trigger': e.trigger_condition,
+                                   'steps': [x for x in [e.step1_role_id, e.step2_role_id, e.step3_role_id] if x],
+                                   'max_wait_hours': e.max_wait_hours, 'fallback': e.fallback_action,
+                                   'ai_can_auto_escalate': e.ai_can_auto_escalate})
+
+    return {
+        'signal': {'type': signal.signal_type, 'severity_rule_based': signal.severity,
+                   'title': signal.title, 'description': signal.description,
+                   'related_role_id': signal.related_role_id,
+                   'detected_at': signal.detected_at.isoformat()},
+        'related_domain': domain_ctx,
+        'escalation_paths': escalation_ctx,
+        'authority_registry': registry,
+    }
+
+
+def rule_based_evaluation(signal, ctx):
+    """Deterministic fallback so the pipeline still works with no API key (or on API failure)."""
+    roles = {r['id']: r for r in ctx['authority_registry']}
+    rec = None
+    # Follow escalation path first
+    for e in ctx['escalation_paths']:
+        for rid in e['steps']:
+            if roles.get(rid, {}).get('status') == 'active':
+                rec = rid
+                break
+        if rec:
+            break
+    # Then successor chain of related role
+    if not rec and signal.related_role_id and signal.related_role_id in roles:
+        r = roles[signal.related_role_id]
+        for cand in [r['id'], r['successor_role_id'], r['backup_role_id']]:
+            if cand and roles.get(cand, {}).get('status') == 'active':
+                rec = cand
+                break
+    domain = ctx['related_domain']
+    risk = domain['risk_level'] if domain else 'medium'
+    severity = 'critical' if risk == 'critical' or signal.severity == 'critical' else ('warning' if risk == 'high' else 'info')
+    hitl = risk in ('critical', 'high') or (domain and domain['category'] in ('compliance', 'financial')) or severity == 'critical'
+    rationale = (f"Rule-based fallback (no LLM). Domain risk={risk}. "
+                 + (f"Routed via escalation path to role #{rec} ({roles[rec]['role']}, active)." if rec else "No active role found in escalation chain; fallback action applies.")
+                 + (" Human checkpoint required by policy." if hitl else ""))
+    return {'severity': severity, 'recommended_role_id': rec, 'hitl_required': bool(hitl),
+            'confidence': 60, 'rationale': rationale}
+
+
+def call_llm(ctx):
+    """Stateless, metered call to the Anthropic Messages API. Returns (parsed_json, usage, latency_ms)."""
+    api_key = app.config['ANTHROPIC_API_KEY']
+    if not api_key:
+        raise RuntimeError('ANTHROPIC_API_KEY not set')
+    body = {
+        'model': app.config['GCA_MODEL'],
+        'max_tokens': 400,
+        'system': EVALUATE_SYSTEM_PROMPT,
+        'messages': [{'role': 'user', 'content': 'Evaluate this governance signal and recommend a route.\n\nCONTEXT:\n' + json.dumps(ctx, indent=1)}],
+    }
+    req = urllib.request.Request(
+        'https://api.anthropic.com/v1/messages',
+        data=json.dumps(body).encode(),
+        headers={'content-type': 'application/json', 'x-api-key': api_key, 'anthropic-version': '2023-06-01'},
+        method='POST')
+    t0 = time.time()
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        data = json.loads(resp.read().decode())
+    latency = int((time.time() - t0) * 1000)
+    text = ''.join(b.get('text', '') for b in data.get('content', []) if b.get('type') == 'text')
+    text = text.strip().replace('```json', '').replace('```', '').strip()
+    parsed = json.loads(text)
+    usage = data.get('usage', {})
+    return parsed, usage, latency
+
+
+def evaluate_signal(signal):
+    """EVALUATE + ROUTE + LOG. Always succeeds: falls back to rules if the LLM is unavailable."""
+    ctx = build_signal_context(signal)
+    log = AICallLog(signal_id=signal.id, model=app.config['GCA_MODEL'])
+    fallback = False
+    try:
+        result, usage, latency = call_llm(ctx)
+        log.tokens_in = usage.get('input_tokens', 0)
+        log.tokens_out = usage.get('output_tokens', 0)
+        log.latency_ms = latency
+    except Exception as exc:  # network, auth, parse — all go to fallback
+        fallback = True
+        log.fallback = True
+        log.error = str(exc)[:500]
+        log.model = 'rule-based-fallback'
+        result = rule_based_evaluation(signal, ctx)
+
+    # Guard: never accept a role the registry doesn't contain (hallucination control)
+    valid_ids = {r['id'] for r in ctx['authority_registry']}
+    rec = result.get('recommended_role_id')
+    if rec not in valid_ids:
+        rec = None
+        result['rationale'] = (result.get('rationale') or '') + ' [Recommended role rejected: not in registry.]'
+
+    signal.ai_severity = result.get('severity') if result.get('severity') in ('info', 'warning', 'critical') else signal.severity
+    signal.ai_recommended_role_id = rec
+    signal.ai_rationale = result.get('rationale')
+    signal.ai_confidence = max(0, min(100, int(result.get('confidence') or 0)))
+    signal.ai_evaluated_at = datetime.utcnow()
+    signal.ai_model = log.model
+    signal.ai_tokens_in = log.tokens_in
+    signal.ai_tokens_out = log.tokens_out
+    signal.ai_fallback = fallback
+
+    # Authority-drift control: high stakes always gets a human checkpoint, regardless of what the model said
+    domain = signal.related_domain
+    forced_hitl = bool(domain and (domain.risk_level in ('critical', 'high') or domain.human_judgment_required))
+    signal.hitl_required = bool(result.get('hitl_required')) or forced_hitl or signal.ai_severity == 'critical'
+    signal.hitl_status = 'pending' if signal.hitl_required else 'none'
+    if not signal.hitl_required and rec:
+        signal.routed_role_id = rec  # low-stakes: AI route is applied directly (still logged)
+
+    db.session.add(log)
+    db.session.commit()
+    return fallback
+
+
+def compute_llmops_metrics():
+    """Slide-4 metrics: Decision Latency, HITL Compliance, Audit Quality, plus metering."""
+    signals = GovernanceSignal.query.all()
+    acted = [s for s in signals if s.action_taken_at]
+    latency = round(sum(s.latency_hours for s in acted) / len(acted), 1) if acted else None
+
+    hitl_needed = [s for s in signals if s.hitl_required]
+    hitl_done = [s for s in hitl_needed if s.hitl_status in ('accepted', 'overridden')]
+    hitl_compliance = int(len(hitl_done) / len(hitl_needed) * 100) if hitl_needed else 100
+
+    closed = [s for s in signals if s.status == 'resolved' or s.hitl_status in ('accepted', 'overridden')]
+    with_rationale = [s for s in closed if (s.hitl_rationale and s.hitl_rationale.strip()) or s.ai_rationale]
+    audit_quality = int(len(with_rationale) / len(closed) * 100) if closed else 100
+
+    calls = AICallLog.query.all()
+    return {
+        'decision_latency_hours': latency,
+        'hitl_compliance': hitl_compliance,
+        'hitl_pending': sum(1 for s in signals if s.hitl_status == 'pending'),
+        'hitl_overrides': sum(1 for s in signals if s.hitl_status == 'overridden'),
+        'audit_quality': audit_quality,
+        'ai_calls': len(calls),
+        'ai_fallbacks': sum(1 for c in calls if c.fallback),
+        'tokens_in': sum(c.tokens_in or 0 for c in calls),
+        'tokens_out': sum(c.tokens_out or 0 for c in calls),
+        'evaluated': sum(1 for s in signals if s.ai_evaluated_at),
+        'llm_configured': bool(app.config['ANTHROPIC_API_KEY']),
+        'model': app.config['GCA_MODEL'],
+    }
+
+
+@app.route('/signals/<int:id>/evaluate', methods=['POST'])
+@login_required
+def evaluate_signal_route(id):
+    signal = GovernanceSignal.query.get_or_404(id)
+    fallback = evaluate_signal(signal)
+    who = signal.ai_recommended_role.role_title if signal.ai_recommended_role else 'no active role (fallback action)'
+    mode = 'rule-based fallback' if fallback else signal.ai_model
+    log_action(f'AI evaluated signal: {signal.title} → {who}',
+               details=f'{mode} · severity={signal.ai_severity} · confidence={signal.ai_confidence} · HITL={"required" if signal.hitl_required else "no"}')
+    if signal.hitl_required:
+        flash(f'Evaluated ({mode}). Recommended route: {who}. Sent to HITL review queue.', 'warning')
+    else:
+        flash(f'Evaluated ({mode}). Routed to {who}.', 'success')
+    return redirect(request.referrer or url_for('signals_list'))
+
+
+@app.route('/signals/evaluate-all', methods=['POST'])
+@login_required
+def evaluate_all_signals():
+    pending = GovernanceSignal.query.filter(GovernanceSignal.status != 'resolved',
+                                            GovernanceSignal.ai_evaluated_at.is_(None)).all()
+    n_fb = 0
+    for s in pending:
+        n_fb += 1 if evaluate_signal(s) else 0
+    log_action(f'AI evaluated {len(pending)} signal(s)', details=f'{n_fb} used rule-based fallback')
+    flash(f'Evaluated {len(pending)} signal(s). {len(pending) - n_fb} via LLM, {n_fb} via fallback.', 'success')
+    return redirect(url_for('signals_list'))
+
+
+# ─── HITL Review Queue (Human Layer) ──────────────────────────────────────────
+
+@app.route('/hitl')
+@login_required
+def hitl_queue():
+    pending = GovernanceSignal.query.filter_by(hitl_status='pending').order_by(GovernanceSignal.detected_at.asc()).all()
+    reviewed = GovernanceSignal.query.filter(GovernanceSignal.hitl_status.in_(['accepted', 'overridden'])) \
+        .order_by(GovernanceSignal.hitl_reviewed_at.desc()).limit(20).all()
+    roles = AuthorityRole.query.order_by(AuthorityRole.role_title).all()
+    return render_template('hitl.html', pending=pending, reviewed=reviewed, roles=roles,
+                           metrics=compute_llmops_metrics())
+
+
+@app.route('/hitl/<int:id>/accept', methods=['POST'])
+@login_required
+def hitl_accept(id):
+    s = GovernanceSignal.query.get_or_404(id)
+    s.hitl_status = 'accepted'
+    s.hitl_rationale = request.form.get('rationale', '').strip() or 'Accepted AI recommendation as proposed.'
+    s.hitl_reviewed_at = datetime.utcnow()
+    s.hitl_reviewer_id = current_user.id
+    s.routed_role_id = s.ai_recommended_role_id
+    s.severity = s.ai_severity or s.severity
+    if s.status == 'active':
+        s.status = 'acknowledged'
+        s.acknowledged_at = datetime.utcnow()
+    db.session.commit()
+    log_action(f'HITL accepted: {s.title}', details=f'Routed to {s.routed_role.role_title if s.routed_role else "—"} · {s.hitl_rationale}')
+    flash('Recommendation accepted and routed.', 'success')
+    return redirect(url_for('hitl_queue'))
+
+
+@app.route('/hitl/<int:id>/override', methods=['POST'])
+@login_required
+def hitl_override(id):
+    s = GovernanceSignal.query.get_or_404(id)
+    rationale = request.form.get('rationale', '').strip()
+    if not rationale:
+        flash('An override requires a written rationale (Audit Quality control).', 'error')
+        return redirect(url_for('hitl_queue'))
+    s.hitl_status = 'overridden'
+    s.hitl_rationale = rationale
+    s.hitl_reviewed_at = datetime.utcnow()
+    s.hitl_reviewer_id = current_user.id
+    rid = request.form.get('routed_role_id')
+    s.routed_role_id = int(rid) if rid else None
+    sev = request.form.get('severity')
+    if sev in ('info', 'warning', 'critical'):
+        s.severity = sev
+    if s.status == 'active':
+        s.status = 'acknowledged'
+        s.acknowledged_at = datetime.utcnow()
+    db.session.commit()
+    log_action(f'HITL override: {s.title}',
+               details=f'AI proposed {s.ai_recommended_role.role_title if s.ai_recommended_role else "—"}; human routed to {s.routed_role.role_title if s.routed_role else "—"} · {rationale}')
+    flash('Override recorded with rationale. This feeds the LEARN loop.', 'success')
+    return redirect(url_for('hitl_queue'))
+
+
+# ─── 90-Day Pilot Path ─────────────────────────────────────────────────────────
+
+PILOT_PHASES = [('crawl', 'Crawl: Map Authority'), ('walk', 'Walk: Route Signals'),
+                ('run', 'Run: Measure'), ('scale', 'Scale: Decide')]
+
+
+@app.route('/pilot')
+@login_required
+def pilot():
+    items = PilotMilestone.query.order_by(PilotMilestone.order).all()
+    by_phase = {k: [] for k, _ in PILOT_PHASES}
+    for i in items:
+        by_phase.setdefault(i.phase, []).append(i)
+    current = 'scale'
+    for k, _ in PILOT_PHASES:
+        if any(not i.done for i in by_phase[k]):
+            current = k
+            break
+    total = len(items)
+    done = sum(1 for i in items if i.done)
+    return render_template('pilot.html', phases=PILOT_PHASES, by_phase=by_phase, current=current,
+                           total=total, done=done, metrics=compute_llmops_metrics())
+
+
+@app.route('/pilot/<int:id>/toggle', methods=['POST'])
+@login_required
+def pilot_toggle(id):
+    m = PilotMilestone.query.get_or_404(id)
+    m.done = not m.done
+    m.done_at = datetime.utcnow() if m.done else None
+    db.session.commit()
+    log_action(f'Pilot milestone {"completed" if m.done else "reopened"}: {m.item}')
+    return redirect(url_for('pilot'))
+
+
+# ─── Controls (risk → mitigation map) ─────────────────────────────────────────
+
+@app.route('/controls')
+@login_required
+def controls():
+    m = compute_llmops_metrics()
+    calls = AICallLog.query.order_by(AICallLog.created_at.desc()).limit(25).all()
+    return render_template('controls.html', metrics=m, calls=calls)
 
 
 # ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -845,13 +1197,73 @@ def seed_demo_data():
         ),
     ]
     db.session.add_all(signals)
+    db.session.flush()
+
+    # One signal already through the full loop (SIGNAL→EVALUATE→ROUTE→LOG) for demo metrics
+    demo_done = GovernanceSignal(
+        signal_type='escalation_failure', severity='warning',
+        title='Vendor Selection decision exceeded 48h without owner',
+        description='Vendor Selection domain has no assigned authority role. Two RFP decisions waited 3 days.',
+        related_domain_id=created_domains[2].id,
+        status='resolved',
+        detected_at=datetime.utcnow() - timedelta(days=4, hours=6),
+        resolved_at=datetime.utcnow() - timedelta(days=4),
+        ai_severity='warning', ai_recommended_role_id=created_roles[0].id, ai_confidence=82,
+        ai_rationale='Vendor Selection (high risk, operational) has no authority_role_id. COO (active) holds enterprise operational scope and appears as step 2 in comparable escalation paths. Recommend COO as interim owner pending registry update.',
+        ai_evaluated_at=datetime.utcnow() - timedelta(days=4, hours=5), ai_model='seeded-demo',
+        ai_tokens_in=1840, ai_tokens_out=142, ai_fallback=False,
+        hitl_required=True, hitl_status='accepted',
+        hitl_rationale='Agree. COO takes interim ownership; registry to be updated to assign a permanent role owner.',
+        hitl_reviewed_at=datetime.utcnow() - timedelta(days=4, hours=1),
+        routed_role_id=created_roles[0].id,
+    )
+    db.session.add(demo_done)
+    db.session.add(AICallLog(signal=demo_done, model='seeded-demo', tokens_in=1840, tokens_out=142, latency_ms=2310,
+                             created_at=datetime.utcnow() - timedelta(days=4, hours=5)))
+
+    # 90-Day Pilot Path (from Assignment 4 deck)
+    pilot_items = [
+        ('crawl', 'Select 2–3 decision domains', True), ('crawl', 'Identify role owners', True),
+        ('crawl', 'Define escalation paths', True), ('crawl', 'Confirm HITL boundaries', True),
+        ('walk', 'Connect approved sources', True), ('walk', 'Test prompt templates', True),
+        ('walk', 'Send alerts to roles', False), ('walk', 'Log outputs + overrides', False),
+        ('run', 'Latency reduced', False), ('run', 'Coverage increased', False),
+        ('run', 'Overrides explained', False), ('run', 'Trust pulse checked', False),
+        ('scale', 'Go / pause / revise decision', False), ('scale', 'Add domains', False),
+        ('scale', 'Harden controls', False), ('scale', 'Train users', False),
+    ]
+    for i, (phase, item, done) in enumerate(pilot_items):
+        db.session.add(PilotMilestone(phase=phase, order=i, item=item, done=done,
+                                      done_at=datetime.utcnow() - timedelta(days=20 - i) if done else None))
     db.session.commit()
 
 
 # ─── App Initialization ───────────────────────────────────────────────────────
 
+def ensure_columns():
+    """Add columns introduced in V3 to databases created by V2 (Railway Postgres / local SQLite)."""
+    from sqlalchemy import inspect, text
+    insp = inspect(db.engine)
+    for table in db.metadata.sorted_tables:
+        if not insp.has_table(table.name):
+            continue
+        existing = {c['name'] for c in insp.get_columns(table.name)}
+        for col in table.columns:
+            if col.name not in existing:
+                ctype = col.type.compile(dialect=db.engine.dialect)
+                with db.engine.begin() as conn:
+                    conn.execute(text(f'ALTER TABLE {table.name} ADD COLUMN {col.name} {ctype}'))
+    # Backfill sensible defaults on rows that pre-date V3
+    if insp.has_table('governance_signal'):
+        with db.engine.begin() as conn:
+            conn.execute(text("UPDATE governance_signal SET hitl_status='none' WHERE hitl_status IS NULL"))
+            conn.execute(text("UPDATE governance_signal SET hitl_required=0 WHERE hitl_required IS NULL"))
+            conn.execute(text("UPDATE governance_signal SET ai_fallback=0 WHERE ai_fallback IS NULL"))
+
+
 with app.app_context():
     db.create_all()
+    ensure_columns()
     seed_demo_data()
 
 if __name__ == '__main__':

@@ -1,69 +1,92 @@
 {% extends 'base.html' %}
 {% block title %}Governance Signals — GCA{% endblock %}
+{% macro ai_panel(s) %}
+    {% if s.ai_evaluated_at %}
+    <div class="ai-box">
+        <div class="h">AI LAYER · EVALUATE → ROUTE {% if s.ai_fallback %}<span class="badge badge-warning" style="margin-left:.4rem;">rule-based fallback</span>{% else %}<span class="badge badge-teal" style="margin-left:.4rem;">{{ s.ai_model }}</span>{% endif %}</div>
+        <div><strong>Severity:</strong> <span class="badge badge-{{ s.ai_severity }}">{{ s.ai_severity }}</span>
+             &nbsp;<strong>Route to:</strong> {{ s.ai_recommended_role.role_title if s.ai_recommended_role else '— fallback action —' }}
+             &nbsp;<strong>Confidence:</strong> {{ s.ai_confidence }}%
+             &nbsp;<strong>HITL:</strong> {% if s.hitl_required %}<span class="badge badge-{{ s.hitl_status }}">{{ s.hitl_status }}</span>{% else %}not required{% endif %}</div>
+        <div style="color:var(--text-secondary);margin-top:.35rem;">{{ s.ai_rationale }}</div>
+        <div style="color:var(--text-muted);font-size:.68rem;margin-top:.3rem;">{{ (s.ai_tokens_in or 0) + (s.ai_tokens_out or 0) }} tokens · evaluated {{ s.ai_evaluated_at.strftime('%b %d, %H:%M') }}
+            {% if s.hitl_status in ('accepted','overridden') %} · human {{ s.hitl_status }} → {{ s.routed_role.role_title if s.routed_role else '—' }}: <em>{{ s.hitl_rationale }}</em>{% endif %}</div>
+    </div>
+    {% endif %}
+{% endmacro %}
 {% block content %}
-<div class="page-header">
-    <h1>Governance Signal Monitoring</h1>
-    <p>Detect governance stress before it becomes a crisis — authority gaps, decision stalls, overload, and trust erosion.</p>
-    <p class="subtitle">Signals are auto-generated when disruption events impact the governance architecture.</p>
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;">
+    <div>
+        <h1>Governance Signal Monitoring</h1>
+        <p>SIGNAL → EVALUATE → ROUTE → LOG → LEARN. The LLM scores relevance and proposes a route; humans keep the decision.</p>
+        <p class="subtitle">{% if metrics.llm_configured %}LLM live ({{ metrics.model }}).{% else %}No ANTHROPIC_API_KEY set — evaluations use the rule-based fallback so the pipeline still runs.{% endif %}</p>
+    </div>
+    <form method="POST" action="{{ url_for('evaluate_all_signals') }}"><button class="btn btn-primary">Evaluate all unreviewed</button></form>
 </div>
 
-{% set active = signals|selectattr('status', 'equalto', 'active')|list %}
-{% set acked = signals|selectattr('status', 'equalto', 'acknowledged')|list %}
-{% set resolved = signals|selectattr('status', 'equalto', 'resolved')|list %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="pipe">
+        <div class="st"><div class="n">01</div><div class="t">Signal</div><div class="s">Governance event detected (auto or manual)</div></div>
+        <div class="st"><div class="n">02</div><div class="t">Evaluate</div><div class="s">LLM scores severity + relevance from bounded context</div></div>
+        <div class="st"><div class="n">03</div><div class="t">Route</div><div class="s">To accountable role, or to HITL if high stakes</div></div>
+        <div class="st"><div class="n">04</div><div class="t">Log</div><div class="s">Recommendation, tokens, override + rationale</div></div>
+        <div class="st"><div class="n">05</div><div class="t">Learn</div><div class="s">Overrides feed playbook + prompt revision</div></div>
+    </div>
+</div>
+
+{% set active = signals|selectattr('status','equalto','active')|list %}
+{% set acked = signals|selectattr('status','equalto','acknowledged')|list %}
+{% set resolved = signals|selectattr('status','equalto','resolved')|list %}
 
 {% if active %}
-<div style="margin-bottom:1.5rem;">
-    <h2 style="font-size:0.82rem;font-weight:700;color:var(--danger);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Active Signals ({{ active|length }})</h2>
-    {% for s in active %}
-    <div class="signal-bar {{ s.severity }}" style="margin-bottom:0.6rem;">
+<h2 style="font-size:.8rem;font-weight:700;color:var(--danger);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem;">Active ({{ active|length }})</h2>
+{% for s in active %}
+<div class="signal-bar {{ s.severity }}" style="margin-bottom:.7rem;flex-direction:column;align-items:stretch;">
+    <div style="display:flex;gap:.8rem;align-items:flex-start;">
         <div class="signal-dot {{ s.severity }}"></div>
         <div style="flex:1;">
-            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.2rem;">
-                <span class="badge badge-{{ s.severity }}">{{ s.severity }}</span>
-                <span class="badge" style="background:var(--bg-secondary);color:var(--text-muted);">{{ s.signal_type.replace('_', ' ') }}</span>
-            </div>
-            <div style="font-size:0.85rem;color:var(--text-primary);font-weight:600;">{{ s.title }}</div>
-            {% if s.description %}<div style="font-size:0.78rem;color:var(--text-secondary);margin-top:0.15rem;">{{ s.description }}</div>{% endif %}
-            <div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.3rem;">Detected {{ s.detected_at.strftime('%b %d, %H:%M') }}</div>
+            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.2rem;"><span class="badge badge-{{ s.severity }}">{{ s.severity }}</span><span class="badge" style="background:var(--bg-secondary);color:var(--text-muted);">{{ s.signal_type.replace('_',' ') }}</span></div>
+            <div style="font-size:.85rem;color:var(--text-primary);font-weight:600;">{{ s.title }}</div>
+            {% if s.description %}<div style="font-size:.78rem;color:var(--text-secondary);margin-top:.15rem;">{{ s.description }}</div>{% endif %}
+            <div style="font-size:.68rem;color:var(--text-muted);margin-top:.3rem;">Detected {{ s.detected_at.strftime('%b %d, %H:%M') }}</div>
         </div>
         <div class="btn-group" style="flex-shrink:0;">
-            <form method="POST" action="{{ url_for('acknowledge_signal', id=s.id) }}" style="display:inline;"><button class="btn btn-outline btn-sm">Acknowledge</button></form>
-            <form method="POST" action="{{ url_for('resolve_signal', id=s.id) }}" style="display:inline;"><button class="btn btn-success btn-sm">Resolve</button></form>
+            {% if not s.ai_evaluated_at %}<form method="POST" action="{{ url_for('evaluate_signal_route', id=s.id) }}"><button class="btn btn-outline btn-sm" style="color:var(--teal);border-color:rgba(20,184,166,.3);">AI Evaluate</button></form>
+            {% elif s.hitl_status == 'pending' %}<a href="{{ url_for('hitl_queue') }}" class="btn btn-warning btn-sm">Review in HITL</a>{% endif %}
+            <form method="POST" action="{{ url_for('acknowledge_signal', id=s.id) }}"><button class="btn btn-outline btn-sm">Acknowledge</button></form>
+            <form method="POST" action="{{ url_for('resolve_signal', id=s.id) }}"><button class="btn btn-success btn-sm">Resolve</button></form>
         </div>
     </div>
-    {% endfor %}
+    {{ ai_panel(s) }}
 </div>
+{% endfor %}
 {% endif %}
 
 {% if acked %}
-<div style="margin-bottom:1.5rem;">
-    <h2 style="font-size:0.82rem;font-weight:700;color:var(--warning);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Acknowledged ({{ acked|length }})</h2>
-    {% for s in acked %}
-    <div class="signal-bar warning" style="margin-bottom:0.6rem;opacity:0.8;">
+<h2 style="font-size:.8rem;font-weight:700;color:var(--warning);text-transform:uppercase;letter-spacing:.06em;margin:1.5rem 0 .75rem;">Acknowledged / Routed ({{ acked|length }})</h2>
+{% for s in acked %}
+<div class="signal-bar warning" style="margin-bottom:.6rem;flex-direction:column;align-items:stretch;opacity:.9;">
+    <div style="display:flex;gap:.8rem;align-items:center;">
         <div class="signal-dot warning"></div>
-        <div style="flex:1;">
-            <div style="font-size:0.82rem;color:var(--text-primary);">{{ s.title }}</div>
-            <div style="font-size:0.7rem;color:var(--text-muted);">{{ s.signal_type.replace('_', ' ') }} · Detected {{ s.detected_at.strftime('%b %d') }}</div>
-        </div>
-        <form method="POST" action="{{ url_for('resolve_signal', id=s.id) }}" style="display:inline;"><button class="btn btn-success btn-sm">Resolve</button></form>
+        <div style="flex:1;"><div style="font-size:.82rem;color:var(--text-primary);">{{ s.title }}</div>
+            <div style="font-size:.68rem;color:var(--text-muted);">{{ s.signal_type.replace('_',' ') }} · detected {{ s.detected_at.strftime('%b %d') }}{% if s.latency_hours is not none %} · latency {{ s.latency_hours }}h{% endif %}</div></div>
+        <form method="POST" action="{{ url_for('resolve_signal', id=s.id) }}"><button class="btn btn-success btn-sm">Resolve</button></form>
     </div>
-    {% endfor %}
+    {{ ai_panel(s) }}
 </div>
+{% endfor %}
 {% endif %}
 
 {% if resolved %}
-<div>
-    <h2 style="font-size:0.82rem;font-weight:700;color:var(--success);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Resolved ({{ resolved|length }})</h2>
-    {% for s in resolved %}
-    <div style="padding:0.5rem 0;border-bottom:1px solid rgba(42,54,80,0.3);font-size:0.8rem;color:var(--text-muted);opacity:0.6;">
-        <span class="badge badge-resolved" style="margin-right:0.5rem;">resolved</span>
-        {{ s.title }} · {{ s.resolved_at.strftime('%b %d') if s.resolved_at else '' }}
-    </div>
-    {% endfor %}
+<h2 style="font-size:.8rem;font-weight:700;color:var(--success);text-transform:uppercase;letter-spacing:.06em;margin:1.5rem 0 .75rem;">Resolved ({{ resolved|length }})</h2>
+{% for s in resolved %}
+<div style="padding:.5rem 0;border-bottom:1px solid rgba(42,54,80,.3);font-size:.8rem;color:var(--text-muted);">
+    <span class="badge badge-resolved" style="margin-right:.5rem;">resolved</span>{{ s.title }}
+    {% if s.latency_hours is not none %}<span style="font-family:'Space Mono',monospace;font-size:.68rem;"> · {{ s.latency_hours }}h latency</span>{% endif %}
+    {% if s.hitl_status in ('accepted','overridden') %} · <span class="badge badge-{{ s.hitl_status }}">{{ s.hitl_status }}</span> → {{ s.routed_role.role_title if s.routed_role else '—' }}{% endif %}
 </div>
+{% endfor %}
 {% endif %}
 
-{% if not signals %}
-<div class="card"><div class="empty-state"><p>No governance signals detected.</p><p style="font-size:0.8rem;color:var(--text-muted);">Signals are auto-generated when disruption events impact authority roles and decision domains.</p></div></div>
-{% endif %}
+{% if not signals %}<div class="card"><div class="empty-state"><p>No governance signals detected.</p></div></div>{% endif %}
 {% endblock %}
