@@ -875,8 +875,13 @@ def compute_llmops_metrics():
     with_rationale = [s for s in closed if (s.hitl_rationale and s.hitl_rationale.strip()) or s.ai_rationale]
     audit_quality = int(len(with_rationale) / len(closed) * 100) if closed else 100
 
+    domains = DecisionDomain.query.all()
+    covered = [d for d in domains if d.authority_role and d.authority_role.status == 'active']
+    authority_coverage = int(len(covered) / len(domains) * 100) if domains else 100
+
     calls = AICallLog.query.all()
     return {
+        'authority_coverage': authority_coverage,
         'decision_latency_hours': latency,
         'hitl_compliance': hitl_compliance,
         'hitl_pending': sum(1 for s in signals if s.hitl_status == 'pending'),
@@ -982,8 +987,36 @@ def hitl_override(id):
 
 # ─── 90-Day Pilot Path ─────────────────────────────────────────────────────────
 
-PILOT_PHASES = [('crawl', 'Crawl: Map Authority'), ('walk', 'Walk: Route Signals'),
-                ('run', 'Run: Measure'), ('scale', 'Scale: Decide')]
+PILOT_PHASES = [('crawl', 'Crawl: Encode Authority'), ('walk', 'Walk: Activate with GenAI'),
+                ('run', 'Run: Prove Continuity'), ('scale', 'Scale: Learn & Expand')]
+
+# Milestone text matches the Assignment 4 deck, slide 5 (order matters: used to sync existing DBs)
+PILOT_ITEMS = [
+    ('crawl', 'Select 2–3 decision domains'), ('crawl', 'Map accountable roles'),
+    ('crawl', 'Encode decision + escalation rights'), ('crawl', 'Establish HITL boundaries'),
+    ('walk', 'Connect approved sources'), ('walk', 'Interpret governance signals'),
+    ('walk', 'Route through encoded authority'), ('walk', 'Log AI + human actions'),
+    ('run', 'Measure decision latency'), ('run', 'Measure authority coverage'),
+    ('run', 'Track escalations + overrides'), ('run', 'Assess trust + auditability'),
+    ('scale', 'Refine authority architecture'), ('scale', 'Improve AI from feedback'),
+    ('scale', 'Add decision domains'), ('scale', 'Harden controls + train users'),
+]
+
+
+def sync_pilot_milestones():
+    """Keep milestone wording in step with the deck on databases that were seeded earlier (done flags preserved)."""
+    existing = {m.order: m for m in PilotMilestone.query.all()}
+    changed = False
+    for i, (phase, item) in enumerate(PILOT_ITEMS):
+        m = existing.get(i)
+        if m is None:
+            db.session.add(PilotMilestone(phase=phase, order=i, item=item, done=False))
+            changed = True
+        elif m.item != item or m.phase != phase:
+            m.item, m.phase = item, phase
+            changed = True
+    if changed:
+        db.session.commit()
 
 
 @app.route('/pilot')
@@ -1221,17 +1254,8 @@ def seed_demo_data():
     db.session.add(AICallLog(signal=demo_done, model='seeded-demo', tokens_in=1840, tokens_out=142, latency_ms=2310,
                              created_at=datetime.utcnow() - timedelta(days=4, hours=5)))
 
-    # 90-Day Pilot Path (from Assignment 4 deck)
-    pilot_items = [
-        ('crawl', 'Select 2–3 decision domains', True), ('crawl', 'Identify role owners', True),
-        ('crawl', 'Define escalation paths', True), ('crawl', 'Confirm HITL boundaries', True),
-        ('walk', 'Connect approved sources', True), ('walk', 'Test prompt templates', True),
-        ('walk', 'Send alerts to roles', False), ('walk', 'Log outputs + overrides', False),
-        ('run', 'Latency reduced', False), ('run', 'Coverage increased', False),
-        ('run', 'Overrides explained', False), ('run', 'Trust pulse checked', False),
-        ('scale', 'Go / pause / revise decision', False), ('scale', 'Add domains', False),
-        ('scale', 'Harden controls', False), ('scale', 'Train users', False),
-    ]
+    # 90-Day Pilot Path (Assignment 4 deck, slide 5) — first six milestones marked done for the demo
+    pilot_items = [(p, it, i < 6) for i, (p, it) in enumerate(PILOT_ITEMS)]
     for i, (phase, item, done) in enumerate(pilot_items):
         db.session.add(PilotMilestone(phase=phase, order=i, item=item, done=done,
                                       done_at=datetime.utcnow() - timedelta(days=20 - i) if done else None))
@@ -1265,6 +1289,7 @@ with app.app_context():
     db.create_all()
     ensure_columns()
     seed_demo_data()
+    sync_pilot_milestones()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

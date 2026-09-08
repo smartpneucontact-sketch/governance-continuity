@@ -18,7 +18,7 @@
 <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;">
     <div>
         <h1>Governance Signal Monitoring</h1>
-        <p>SIGNAL → EVALUATE → ROUTE → LOG → LEARN. The LLM scores relevance and proposes a route; humans keep the decision.</p>
+        <p>SIGNAL → EVALUATE → ROUTE → HUMAN DECISION → LOG → LEARN. The LLM interprets the signal and proposes a route through the encoded authority; humans decide.</p>
         <p class="subtitle">{% if metrics.llm_configured %}LLM live ({{ metrics.model }}).{% else %}No ANTHROPIC_API_KEY set — evaluations use the rule-based fallback so the pipeline still runs.{% endif %}</p>
     </div>
     <form method="POST" action="{{ url_for('evaluate_all_signals') }}"><button class="btn btn-primary">Evaluate all unreviewed</button></form>

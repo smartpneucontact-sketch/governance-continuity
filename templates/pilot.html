@@ -34,9 +34,10 @@
 </div>
 
 <div class="card" style="margin-top:1.5rem;">
-    <div class="card-header"><h2>Run-phase evidence (live from the system)</h2></div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
+    <div class="card-header"><h2>Run-phase evidence — prove continuity (live from the system)</h2></div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;">
         <div class="metric"><div class="v" style="color:var(--accent);">{% if metrics.decision_latency_hours is not none %}{{ metrics.decision_latency_hours }}h{% else %}—{% endif %}</div><div class="l">Latency</div><div class="d">signal → action</div></div>
+        <div class="metric"><div class="v" style="color:var(--purple);">{{ metrics.authority_coverage }}%</div><div class="l">Authority coverage</div><div class="d">domains with an active owner</div></div>
         <div class="metric"><div class="v" style="color:var(--teal);">{{ metrics.evaluated }}</div><div class="l">Coverage</div><div class="d">signals evaluated</div></div>
         <div class="metric"><div class="v" style="color:var(--purple);">{{ metrics.hitl_overrides }}</div><div class="l">Overrides</div><div class="d">all with rationale</div></div>
         <div class="metric"><div class="v" style="color:var(--success);">{{ metrics.hitl_compliance }}%</div><div class="l">Trust</div><div class="d">HITL compliance</div></div>

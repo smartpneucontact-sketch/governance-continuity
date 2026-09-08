@@ -1,0 +1,111 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B0F19;--card:#1A2233;--b:#2A3650;--t:#E8ECF4;--t2:#8B95A8;--t3:#5A6478;--blue:#3B82F6;--teal:#14B8A6;--purple:#8B5CF6;--amber:#F59E0B;--green:#22C55E;--red:#EF4444}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1600px;height:780px;background:var(--bg);color:var(--t);font-family:'DM Sans',sans-serif;padding:36px 44px;position:relative;overflow:hidden}
+body::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.035) 1px,transparent 1px);background-size:60px 60px}
+.hdr{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;position:relative}
+.brand{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.2em;color:var(--blue);display:flex;align-items:center;gap:8px}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--blue);box-shadow:0 0 10px var(--blue)}
+h1{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:6px}
+h1 span{color:var(--blue)}
+.sub{color:var(--t2);font-size:14px;margin-top:4px}
+.tag{font-family:'Space Mono',monospace;font-size:11px;color:var(--t3);text-align:right;line-height:1.7}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;position:relative}
+.layer{background:var(--card);border:1px solid var(--b);border-radius:12px;padding:16px 18px;position:relative;min-height:236px}
+.layer h3{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
+.layer .role{font-size:13px;color:var(--t2);margin-bottom:12px;font-style:italic}
+.layer.data{border-top:3px solid var(--purple)} .layer.data h3{color:var(--purple)}
+.layer.ai{border-top:3px solid var(--teal)} .layer.ai h3{color:var(--teal)}
+.layer.human{border-top:3px solid var(--amber)} .layer.human h3{color:var(--amber)}
+.comp{display:flex;align-items:flex-start;gap:9px;padding:6px 0;border-top:1px solid rgba(42,54,80,.5);font-size:13px}
+.comp b{display:block;color:var(--t);font-weight:700}
+.comp small{display:block;color:var(--t3);font-size:11.5px;margin-top:1px}
+.comp .ic{width:22px;height:22px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-family:'Space Mono',monospace;font-weight:700;margin-top:2px}
+.data .ic{background:rgba(139,92,246,.18);color:var(--purple)} .ai .ic{background:rgba(20,184,166,.18);color:var(--teal)} .human .ic{background:rgba(245,158,11,.18);color:var(--amber)}
+.gos{margin-top:16px;background:linear-gradient(90deg,rgba(59,130,246,.10),rgba(20,184,166,.06));border:1px solid rgba(59,130,246,.35);border-radius:12px;padding:14px 18px;position:relative}
+.gos h3{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.14em;color:var(--blue);margin-bottom:10px}
+.pipe{display:flex;align-items:center;gap:10px}
+.st{flex:1;background:rgba(11,15,25,.7);border:1px solid var(--b);border-radius:9px;padding:10px 12px}
+.st .n{font-family:'Space Mono',monospace;font-size:10px;color:var(--teal);letter-spacing:.12em}
+.st .t{font-weight:700;font-size:14px;margin:2px 0 1px}
+.st .s{font-size:11.5px;color:var(--t2);line-height:1.35}
+.arr{color:var(--t3);font-size:18px}
+.bottom{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;margin-top:16px;position:relative}
+.box{background:var(--card);border:1px solid var(--b);border-radius:12px;padding:14px 18px}
+.box h3{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.14em;color:var(--t2);margin-bottom:10px;text-transform:uppercase}
+.stack{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.chip{background:rgba(11,15,25,.7);border:1px solid var(--b);border-radius:8px;padding:8px 10px}
+.chip b{display:block;font-size:12.5px} .chip small{display:block;font-size:11px;color:var(--t3);margin-top:1px}
+.ctrl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:12.5px;line-height:1.45}
+.ctrl .r{color:var(--red);font-weight:700;white-space:nowrap} .ctrl .c{color:var(--t2)}
+.foot{position:absolute;bottom:18px;left:44px;right:44px;display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:11px;color:var(--t3)}
+.foot b{color:var(--t2);font-weight:400;font-style:italic;font-family:'DM Sans',sans-serif;font-size:13px}
+.lbl{position:absolute;top:-11px;left:16px;background:var(--bg);padding:0 8px;font-family:'Space Mono',monospace;font-size:10px;color:var(--t3);letter-spacing:.12em}
+</style></head><body>
+<div class="hdr">
+  <div><div class="brand"><span class="dot"></span>GOVERNANCE CONTINUITY ARCHITECTURE</div>
+    <h1>The Governance OS — <span>technical architecture</span></h1>
+    <div class="sub">Three layers from the AI Tools deck, mapped onto the Governance OS components from Craig's framing. Humans decide. AI supports.</div></div>
+  <div class="tag">MIT Sloan · Group 7<br>Rev. V3 · Sept 2026<br>Validated: A. Khanguieldyan</div>
+</div>
+
+<div class="grid">
+  <div class="layer data"><span class="lbl">SOURCE OF TRUTH</span>
+    <h3>Data Layer</h3><div class="role">Org charts · policies · decision history · compliance events</div>
+    <div class="comp"><div class="ic">R</div><div><b>Role-Based Authority Registry</b><small>Authority encoded to roles, not persons · successor + backup chains</small></div></div>
+    <div class="comp"><div class="ic">D</div><div><b>Decision Continuity Framework</b><small>Domains × risk × velocity × AI-support level × owner role</small></div></div>
+    <div class="comp"><div class="ic">E</div><div><b>Escalation Maps</b><small>Ordered role chains, trigger, timeout, fallback action</small></div></div>
+    <div class="comp"><div class="ic">S</div><div><b>Governance Signals + Disruptions</b><small>Authority gaps, stalls, overload, escalation failures</small></div></div>
+  </div>
+  <div class="layer ai"><span class="lbl">STATELESS · METERED · LOGGED</span>
+    <h3>AI Layer — LLMOps</h3><div class="role">Evaluate relevance · detect delays · route to accountable role · preserve audit trail</div>
+    <div class="comp"><div class="ic">1</div><div><b>Bounded context builder</b><small>Registry + related domain + its escalation paths only (hallucination control)</small></div></div>
+    <div class="comp"><div class="ic">2</div><div><b>Claude via Anthropic Messages API</b><small>System prompt → structured JSON: severity, route, HITL flag, confidence, rationale</small></div></div>
+    <div class="comp"><div class="ic">3</div><div><b>Registry guard + forced-HITL policy</b><small>Unknown roles rejected; critical / high-risk domains always routed to a human</small></div></div>
+    <div class="comp"><div class="ic">4</div><div><b>Rule-based fallback + call log</b><small>Same loop runs without a key; tokens, latency, mode recorded per call</small></div></div>
+  </div>
+  <div class="layer human"><span class="lbl">AUTHORITY · JUDGMENT · ACCOUNTABILITY</span>
+    <h3>Human Layer</h3><div class="role">Decide · override · escalate · own the outcome</div>
+    <div class="comp"><div class="ic">H</div><div><b>HITL Review Queue</b><small>Accept or override each recommendation · override requires written rationale</small></div></div>
+    <div class="comp"><div class="ic">M</div><div><b>Success metrics</b><small>Continuity Score · Decision Latency · HITL Compliance · Audit Quality</small></div></div>
+    <div class="comp"><div class="ic">C</div><div><b>Controls board</b><small>Risk → control → enforcing mechanism (NIST AI RMF aligned)</small></div></div>
+    <div class="comp"><div class="ic">P</div><div><b>90-Day Pilot tracker</b><small>Crawl → Walk → Run → Scale with live run-phase evidence</small></div></div>
+  </div>
+</div>
+
+<div class="gos"><h3>THE OPERATING LOOP — SIGNAL → EVALUATE → ROUTE → LOG → LEARN</h3>
+  <div class="pipe">
+    <div class="st"><div class="n">01 · DATA</div><div class="t">Signal</div><div class="s">Disruption or delay detected; signal created with domain + role context</div></div><div class="arr">→</div>
+    <div class="st"><div class="n">02 · AI</div><div class="t">Evaluate</div><div class="s">LLM scores severity &amp; relevance from bounded context</div></div><div class="arr">→</div>
+    <div class="st"><div class="n">03 · AI → HUMAN</div><div class="t">Route</div><div class="s">Low stakes → accountable role. High stakes → HITL queue</div></div><div class="arr">→</div>
+    <div class="st"><div class="n">04 · ALL</div><div class="t">Log</div><div class="s">Recommendation, tokens, decision, override rationale, reviewer</div></div><div class="arr">→</div>
+    <div class="st"><div class="n">05 · HUMAN</div><div class="t">Learn</div><div class="s">Override history reviewed to refine playbooks and prompts</div></div>
+  </div>
+</div>
+
+<div class="bottom">
+  <div class="box"><h3>Validated technical stack</h3>
+    <div class="stack">
+      <div class="chip"><b>Python 3.12 · Flask 3</b><small>App server, routing, Jinja templates</small></div>
+      <div class="chip"><b>SQLAlchemy 2</b><small>ORM · 8 models · auto column migration</small></div>
+      <div class="chip"><b>PostgreSQL / SQLite</b><small>Railway Postgres in prod, SQLite locally</small></div>
+      <div class="chip"><b>Flask-Login</b><small>Session auth, RBAC-ready user model</small></div>
+      <div class="chip"><b>Anthropic Messages API</b><small>claude-sonnet-4-6 · key in server env only</small></div>
+      <div class="chip"><b>Gunicorn</b><small>WSGI, stateless workers</small></div>
+      <div class="chip"><b>Railway</b><small>Git-push deploy, env vars, Postgres add-on</small></div>
+      <div class="chip"><b>Server-rendered HTML/CSS</b><small>No JS framework · no client-side state</small></div>
+    </div>
+  </div>
+  <div class="box"><h3>Risk → control (slide 4)</h3>
+    <div class="ctrl">
+      <div class="r">Hallucination</div><div class="c">Bounded context; registry guard rejects unknown roles; HITL on high stakes</div>
+      <div class="r">Authority drift</div><div class="c">Routes only to registered roles; critical / human-judgment domains forced to HITL</div>
+      <div class="r">Privacy / security</div><div class="c">Login on every route; key server-side; every call and decision audited</div>
+      <div class="r">Adoption</div><div class="c">Model, confidence, rationale, cost and mode shown on every output</div>
+    </div>
+  </div>
+</div>
+<div class="foot"><b>Leadership may be volatile. Governance must remain continuous.</b><span>Group 7 · Governance Continuity in the AI Age</span></div>
+</body></html>

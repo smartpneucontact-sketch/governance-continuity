@@ -12,6 +12,7 @@
     <div class="ctrl"><div class="r">Hallucination</div><div class="c">Retrieval from bounded context only; source limits; HITL for high-stakes outputs.</div><div class="w">LLM sees only the registry, the related domain, and its escalation paths. Any recommended role not in the registry is rejected before it is stored.</div></div>
     <div class="ctrl"><div class="r">Authority drift</div><div class="c">Role registry + escalation rules — not ad hoc decisions.</div><div class="w">AI can only route to registered roles. Critical/high-risk domains and human-judgment domains are forced to HITL regardless of model output.</div></div>
     <div class="ctrl"><div class="r">Privacy / security</div><div class="c">RBAC, audit trails, approved data pathways.</div><div class="w">Login required on every route; API key held only in server environment; every AI call and human decision written to the audit log.</div></div>
+    <div class="ctrl"><div class="r">Model failure</div><div class="c">Deterministic rule-based fallback.</div><div class="w">If the model is unavailable, times out, or returns malformed output, the same signal is routed through the encoded escalation path and successor chain. Fallback use is flagged on the signal and in the call log.</div></div>
     <div class="ctrl"><div class="r">Adoption</div><div class="c">Training + transparent purpose and limits.</div><div class="w">Every AI output shows model, confidence, rationale, token cost and whether the rule-based fallback was used. Pilot page tracks user training.</div></div>
 </div>
 

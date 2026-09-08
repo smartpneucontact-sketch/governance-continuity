@@ -123,3 +123,15 @@ Set `ANTHROPIC_API_KEY` in Railway before the presentation to run the live model
 - Agree on the two or three decision domains for the pilot (Crawl step 1) and prune the demo data to those.
 - Decide who on the team plays "reviewer" during the demo so the HITL step is a human on stage, not a click.
 - Add one slide to the deck with a screenshot of the HITL page — it is the clearest single image of "humans decide, AI supports."
+
+---
+
+## 7. V3.1 — alignment with the revised Assignment 4 deck (7 Sept 2026)
+
+Validation of Craig's revision against the deployed app found the deck accurate on every architectural claim. Three wording-level gaps in the *app* were closed so the two match exactly:
+
+- **Pilot milestones** now use the deck's slide-5 text (Crawl: Encode Authority / Walk: Activate with GenAI / Run: Prove Continuity / Scale: Learn & Expand). Existing databases are updated in place; completed flags are preserved.
+- **Model failure** added as an explicit row on the Controls page (deterministic rule-based fallback), matching slide 4.
+- **Authority coverage** — the share of decision domains with an *active* owner role — is now a standalone metric on the Pilot page, since slides 4 and 5 name it.
+
+No architectural or behavioural change. The deck's statement "GovernanceOS encodes authority. GenAI activates the architecture. Humans retain judgment and accountability." is a faithful description of the code.
